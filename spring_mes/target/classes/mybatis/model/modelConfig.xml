@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+  <settings>
+    <setting name="jdbcTypeForNull" value="NULL"/>
+  </settings>
+
+  <typeAliases>
+    <typeAlias type="kr.or.mes2.dto.DashboardDTO" alias="DashboardDTO"/>
+    <typeAlias type="kr.or.mes2.dto.UserDTO" alias="UserDTO"/>
+  </typeAliases>
+
+  <mappers>
+    <!-- ✅ 기존 매퍼 유지 -->
+    <mapper resource="mybatis/mappers/DashboardMapper.xml"/>
+
+    <!-- ✅ 새로 추가된 로그인용 매퍼 -->
+    <mapper resource="mybatis/mappers/UserMapper.xml"/>
+  </mappers>
+
+</configuration>

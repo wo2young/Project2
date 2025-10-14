@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+	<!-- DispatcherServlet Context -->
+	<mvc:annotation-driven />
+
+	<mvc:resources mapping="/resources/**"
+		location="/resources/" />
+
+	<beans:bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+
+	<context:component-scan
+		base-package="kr.or.mes2" />
+
+	<!-- ✅ Interceptor 등록 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<!-- ① 인터셉터가 적용될 URL -->
+			<mvc:mapping path="/**" />
+
+			<!-- ② 예외 경로들 (순서 상관 없음, bean보다 위에만 있으면 됨) -->
+			<mvc:exclude-mapping path="/login" />
+			<mvc:exclude-mapping path="/logout" />
+			<mvc:exclude-mapping path="/mypage" />
+			<mvc:exclude-mapping path="/password/reset" />
+			<mvc:exclude-mapping path="/resources/**" />
+			<mvc:exclude-mapping path="/static/**" />
+
+			<!-- ③ 실제 인터셉터 클래스 (항상 마지막에) -->
+			<beans:bean
+				class="kr.or.mes2.interceptor.ForceChangePasswordInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
+	
+</beans:beans>

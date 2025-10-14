@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mapper.DashboardMapper">
+
+	<!-- 1️⃣ 오늘 요약 (양품 + 불량) -->
+	<select id="selectTodaySummary" resultType="map">
+		SELECT
+		NVL(SUM(GOOD_QTY),0) AS GOOD,
+		NVL(SUM(FAIL_QTY),0) AS DEFECT
+		FROM
+		PRODUCTION_RESULT
+		WHERE TRUNC(WORK_DATE) = TRUNC(SYSDATE)
+	</select>
+
+	<!-- 2️번 최근 7일 생산량 -->
+	<select id="selectProdLast7" resultType="map">
+		SELECT
+		TO_CHAR(d,'MM-DD') AS LABEL,
+		NVL(SUM(r.GOOD_QTY),0) AS VALUE
+		FROM
+		(SELECT TRUNC(SYSDATE) - LEVEL + 1 d FROM DUAL CONNECT BY LEVEL &lt;=
+		7) d
+		LEFT JOIN PRODUCTION_RESULT r
+		ON TRUNC(r.WORK_DATE)=d.d
+		GROUP BY d
+		ORDER BY d
+	</select>
+
+	<!-- 3️번 이번달 목표 vs 실적 -->
+	<select id="selectTargetVsActualMonth" resultType="map">
+		WITH cal AS (
+		SELECT TRUNC(SYSDATE,'MM') + LEVEL - 1 AS d
+		FROM dual CONNECT BY LEVEL
+		&lt;= (LAST_DAY(SYSDATE) - TRUNC(SYSDATE,'MM')
+		+ 1)
+		),
+		actual_d AS (
+		SELECT TRUNC(WORK_DATE) d, SUM(GOOD_QTY) qty
+		FROM PRODUCTION_RESULT
+		WHERE TRUNC(WORK_DATE,'MM') = TRUNC(SYSDATE,'MM')
+		GROUP BY
+		TRUNC(WORK_DATE)
+		),
+		tgt_d AS (
+		SELECT d.d,
+		SUM( t.TARGET_QUANTITY /
+		NULLIF((TRUNC(t.PERIOD_END) -
+		TRUNC(t.PERIOD_START) + 1), 0) )
+		tgt_per_day
+		FROM cal d
+		JOIN PRODUCTION_TARGET t
+		ON d.d BETWEEN
+		TRUNC(t.PERIOD_START) AND TRUNC(t.PERIOD_END)
+		GROUP BY d.d
+		),
+		wk AS (
+		SELECT d, TO_CHAR(d,'W') AS w FROM cal )
+		SELECT
+		'W'||w.w AS LABEL,
+		NVL(SUM(td.tgt_per_day),0) AS TARGET_QTY,
+		NVL(SUM(ad.qty),0) AS
+		RESULT_QTY
+		FROM cal c
+		JOIN wk w ON w.d = c.d
+		LEFT JOIN tgt_d td ON td.d =
+		c.d
+		LEFT JOIN actual_d ad ON ad.d = c.d
+		GROUP BY w.w
+		ORDER BY MIN(c.d)
+	</select>
+
+	<select id="selectDefectPieMonth" resultType="map">
+		SELECT NVL(cd.CODE_DNAME, q.DETAIL_CODE) AS LABEL,
+		NVL(q.CNT, 0) AS VALUE
+		FROM CODE_DETAIL cd
+		LEFT JOIN (
+		SELECT TRIM(UPPER(DETAIL_CODE)) DETAIL_CODE, SUM(NVL(QUANTITY,0)) CNT
+		FROM QUALITY_DEFECT
+		WHERE DETAIL_CODE IS NOT NULL
+		GROUP BY TRIM(UPPER(DETAIL_CODE))
+		) q
+		ON TRIM(UPPER(cd.DETAIL_CODE)) = q.DETAIL_CODE
+		WHERE TRIM(UPPER(cd.DETAIL_CODE)) LIKE 'DEF-%'
+		ORDER BY VALUE DESC, LABEL ASC
+	</select>
+
+	<!-- 5️번 재고 현황 -->
+	<select id="selectInventoryStatus" resultType="map">
+		SELECT
+		i.ITEM_NAME
+		AS LABEL,
+		NVL(SUM(t.QUANTITY),0) AS VALUE
+		FROM ITEM_MASTER i
+		LEFT JOIN
+		INVENTORY_TRANSACTION t ON i.ITEM_ID = t.ITEM_ID
+		GROUP BY i.ITEM_NAME
+		ORDER BY i.ITEM_NAME
+	</select>
+
+
+	<!-- 6️번 설비별 가동률 (테이블 생성 후 작성 예정) <select id="selectEquipmentOEE" resultType="map"> 
+		SELECT EQUIPMENT_NAME AS LABEL, ROUND(100 * SUM(CASE WHEN STATUS='RUNNING' 
+		THEN 1 ELSE 0 END)/COUNT(*),1) AS VALUE FROM EQUIPMENT_STATUS GROUP BY EQUIPMENT_NAME 
+		ORDER BY EQUIPMENT_NAME </select> -->
+
+
+	<!-- 7️번 승인 요청 상태 (테이블 생성 후 작성 예정) <select id="selectApprovalStatus" resultType="map"> 
+		SELECT STATUS AS LABEL, COUNT(*) AS VALUE FROM APPROVAL_REQUEST GROUP BY 
+		STATUS ORDER BY STATUS </select> -->
+
+</mapper>
