@@ -9,3 +9,5 @@ kr.or.mes2로 만들었습니당
 # Maven 다운로드 ㄱㄱ
 https://archive.apache.org/dist/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.zip
 다운받고 tools에 두고 환경변수 설정 하시면 됩니다.
+#***sts.ini***
+여기에 maven 넣어야함
