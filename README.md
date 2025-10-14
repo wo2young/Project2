@@ -10,4 +10,4 @@ kr.or.mes2로 만들었습니당
 https://archive.apache.org/dist/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.zip
 다운받고 tools에 두고 환경변수 설정 하시면 됩니다.
 #***sts.ini***
-여기에 maven 넣어야함
+-Djdk.tls.client.protocols=TLSv1.2 이거 넣어야함
