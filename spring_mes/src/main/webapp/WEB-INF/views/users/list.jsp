@@ -181,8 +181,10 @@ th {
 
 <body>
 	<div class="table-container">
-		<h2>사용자 목록</h2>
-
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>사용자 목록</h2>
+        <a href="${pageContext.request.contextPath}/users/new" class="btn btn-primary">＋ 사용자 추가</a>
+    </div>
 		<table class="table">
 			<thead>
 				<tr>
@@ -198,20 +200,20 @@ th {
 			<tbody>
 				<c:forEach var="u" items="${list}">
 					<tr>
-						<td>${u.user_id}</td>
-						<td>${u.login_id}</td>
+						<td>${u.userId}</td>
+						<td>${u.loginId}</td>
 						<td>${u.name}</td>
-						<td>${u.user_role}</td>
-						<td>${u.created_at}</td>
+						<td>${u.role}</td>
+						<td>${u.createdAt}</td>
 						<td>
 							<form action="${pageContext.request.contextPath}/users/reset-pw"
 								method="post" style="display: inline;">
-								<input type="hidden" name="id" value="${u.user_id}">
+								<input type="hidden" name="id" value="${u.userId}">
 								<button type="submit" class="btn btn-danger">비밀번호 리셋</button>
 							</form>
 						</td>
 						<td><a
-							href="${pageContext.request.contextPath}/users/edit?id=${u.user_id}"
+							href="${pageContext.request.contextPath}/users/edit?id=${u.userId}"
 							class="btn btn-primary">수정</a></td>
 					</tr>
 				</c:forEach>
@@ -242,20 +244,19 @@ th {
 	</div>
 
 <script>
-  // ✅ JSP에서 메시지가 있을 때 자동 모달 표시
-  <%if (request.getAttribute("token") != null) {%>
+  <% if (request.getAttribute("token") != null) { %>
   const modal = document.getElementById('resetModal');
   const user = document.getElementById('modalUser');
   const token = document.getElementById('modalToken');
 
   user.textContent = '<%= ((kr.or.mes2.dto.UserDTO) request.getAttribute("target")).getName() %>';
-  token.textContent = '<%=request.getAttribute("token")%>';
+  token.textContent = '<%= request.getAttribute("token") %>';
 
   modal.classList.add('active');
   setTimeout(() => modal.classList.remove('active'), 3000);
 
   document.getElementById('modalClose').onclick = () => modal.classList.remove('active');
-  <%}%>
+  <% } %>
 </script>
 </body>
 </html>

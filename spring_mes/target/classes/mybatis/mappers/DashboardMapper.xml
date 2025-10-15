@@ -6,109 +6,124 @@
 <mapper namespace="kr.or.mes2.mapper.DashboardMapper">
 
 	<!-- 1️⃣ 오늘 요약 (양품 + 불량) -->
-	<select id="selectTodaySummary" resultType="map">
+	<select id="selectTodaySummary" resultType="kr.or.mes2.dto.DashboardDTO">
 		SELECT
-		NVL(SUM(GOOD_QTY),0) AS GOOD,
-		NVL(SUM(FAIL_QTY),0) AS DEFECT
-		FROM
-		PRODUCTION_RESULT
+			NVL(SUM(GOOD_QTY), 0) AS goodQty,
+			NVL(SUM(DEFECT_QTY), 0) AS defectQty
+		FROM PRODUCTION_RESULT
 		WHERE TRUNC(WORK_DATE) = TRUNC(SYSDATE)
 	</select>
 
-	<!-- 2️번 최근 7일 생산량 -->
-	<select id="selectProdLast7" resultType="map">
+	<!-- 2️⃣ 최근 7일 생산량 -->
+	<select id="selectProdLast7" resultType="kr.or.mes2.dto.DashboardDTO">
 		SELECT
-		TO_CHAR(d,'MM-DD') AS LABEL,
-		NVL(SUM(r.GOOD_QTY),0) AS VALUE
-		FROM
-		(SELECT TRUNC(SYSDATE) - LEVEL + 1 d FROM DUAL CONNECT BY LEVEL &lt;=
-		7) d
+			TO_CHAR(d, 'MM-DD') AS label,
+			NVL(SUM(r.GOOD_QTY), 0) AS value
+		FROM (
+			SELECT TRUNC(SYSDATE) - LEVEL + 1 AS d
+			FROM DUAL
+			CONNECT BY LEVEL &lt;= 7
+		) d
 		LEFT JOIN PRODUCTION_RESULT r
-		ON TRUNC(r.WORK_DATE)=d.d
+			ON TRUNC(r.WORK_DATE) = d.d
 		GROUP BY d
 		ORDER BY d
 	</select>
 
-	<!-- 3️번 이번달 목표 vs 실적 -->
-	<select id="selectTargetVsActualMonth" resultType="map">
+	<!-- 3️⃣ 이번달 목표 vs 실적 -->
+	<select id="selectTargetVsActualMonth" resultType="kr.or.mes2.dto.DashboardDTO">
 		WITH cal AS (
-		SELECT TRUNC(SYSDATE,'MM') + LEVEL - 1 AS d
-		FROM dual CONNECT BY LEVEL
-		&lt;= (LAST_DAY(SYSDATE) - TRUNC(SYSDATE,'MM')
-		+ 1)
+			SELECT TRUNC(SYSDATE,'MM') + LEVEL - 1 AS d
+			FROM dual
+			CONNECT BY LEVEL &lt;= (LAST_DAY(SYSDATE) - TRUNC(SYSDATE,'MM') + 1)
 		),
 		actual_d AS (
-		SELECT TRUNC(WORK_DATE) d, SUM(GOOD_QTY) qty
-		FROM PRODUCTION_RESULT
-		WHERE TRUNC(WORK_DATE,'MM') = TRUNC(SYSDATE,'MM')
-		GROUP BY
-		TRUNC(WORK_DATE)
+			SELECT TRUNC(WORK_DATE) AS d, SUM(GOOD_QTY) AS qty
+			FROM PRODUCTION_RESULT
+			WHERE TRUNC(WORK_DATE,'MM') = TRUNC(SYSDATE,'MM')
+			GROUP BY TRUNC(WORK_DATE)
 		),
 		tgt_d AS (
-		SELECT d.d,
-		SUM( t.TARGET_QUANTITY /
-		NULLIF((TRUNC(t.PERIOD_END) -
-		TRUNC(t.PERIOD_START) + 1), 0) )
-		tgt_per_day
-		FROM cal d
-		JOIN PRODUCTION_TARGET t
-		ON d.d BETWEEN
-		TRUNC(t.PERIOD_START) AND TRUNC(t.PERIOD_END)
-		GROUP BY d.d
+			SELECT TRUNC(START_DATE) AS start_d,
+				   TRUNC(END_DATE) AS end_d,
+				   TARGET_QTY
+			FROM PRODUCTION_TARGET
+			WHERE TRUNC(START_DATE,'MM') = TRUNC(SYSDATE,'MM')
+			   OR TRUNC(END_DATE,'MM') = TRUNC(SYSDATE,'MM')
+		),
+		tgt_cal AS (
+			SELECT c.d,
+			       SUM(t.TARGET_QTY / NULLIF((t.END_D - t.START_D + 1),0)) AS tgt_per_day
+			FROM cal c
+			JOIN tgt_d t ON c.d BETWEEN t.START_D AND t.END_D
+			GROUP BY c.d
 		),
 		wk AS (
-		SELECT d, TO_CHAR(d,'W') AS w FROM cal )
+			SELECT d, TO_CHAR(d, 'W') AS w FROM cal
+		)
 		SELECT
-		'W'||w.w AS LABEL,
-		NVL(SUM(td.tgt_per_day),0) AS TARGET_QTY,
-		NVL(SUM(ad.qty),0) AS
-		RESULT_QTY
+			'W' || w.w AS label,
+			NVL(SUM(tc.tgt_per_day), 0) AS targetQty,
+			NVL(SUM(a.qty), 0) AS resultQty
 		FROM cal c
 		JOIN wk w ON w.d = c.d
-		LEFT JOIN tgt_d td ON td.d =
-		c.d
-		LEFT JOIN actual_d ad ON ad.d = c.d
+		LEFT JOIN tgt_cal tc ON tc.d = c.d
+		LEFT JOIN actual_d a ON a.d = c.d
 		GROUP BY w.w
 		ORDER BY MIN(c.d)
 	</select>
 
-	<select id="selectDefectPieMonth" resultType="map">
-		SELECT NVL(cd.CODE_DNAME, q.DETAIL_CODE) AS LABEL,
-		NVL(q.CNT, 0) AS VALUE
-		FROM CODE_DETAIL cd
-		LEFT JOIN (
-		SELECT TRIM(UPPER(DETAIL_CODE)) DETAIL_CODE, SUM(NVL(QUANTITY,0)) CNT
+	<!-- 4️⃣ 불량 현황 (월별 불량유형별 비율) -->
+	<select id="selectDefectPieMonth" resultType="kr.or.mes2.dto.DashboardDTO">
+		SELECT
+			NVL(DEFECT_TYPE, '기타') AS label,
+			SUM(NVL(DEFECT_QTY, 0)) AS value
 		FROM QUALITY_DEFECT
-		WHERE DETAIL_CODE IS NOT NULL
-		GROUP BY TRIM(UPPER(DETAIL_CODE))
-		) q
-		ON TRIM(UPPER(cd.DETAIL_CODE)) = q.DETAIL_CODE
-		WHERE TRIM(UPPER(cd.DETAIL_CODE)) LIKE 'DEF-%'
-		ORDER BY VALUE DESC, LABEL ASC
+		WHERE TRUNC(CREATED_AT, 'MM') = TRUNC(SYSDATE, 'MM')
+		GROUP BY DEFECT_TYPE
+		ORDER BY value DESC
 	</select>
 
-	<!-- 5️번 재고 현황 -->
-	<select id="selectInventoryStatus" resultType="map">
+	<!-- 5️⃣ 재고 현황 -->
+	<select id="selectInventoryStatus" resultType="kr.or.mes2.dto.DashboardDTO">
 		SELECT
-		i.ITEM_NAME
-		AS LABEL,
-		NVL(SUM(t.QUANTITY),0) AS VALUE
+			i.ITEM_NAME AS label,
+			NVL(SUM(
+				CASE
+					WHEN t.TXN_TYPE = 'IN' THEN t.QTY
+					WHEN t.TXN_TYPE = 'OUT' THEN -t.QTY
+					ELSE 0
+				END
+			), 0) AS value
 		FROM ITEM_MASTER i
-		LEFT JOIN
-		INVENTORY_TRANSACTION t ON i.ITEM_ID = t.ITEM_ID
+		LEFT JOIN INVENTORY_TRANSACTION t
+			ON i.ITEM_ID = t.ITEM_ID
 		GROUP BY i.ITEM_NAME
 		ORDER BY i.ITEM_NAME
 	</select>
 
+	<!-- 6️⃣ 설비별 가동률 -->
+	<select id="selectEquipmentOEE" resultType="kr.or.mes2.dto.DashboardDTO">
+		SELECT
+			e.EQUIP_CODE AS label,
+			ROUND(
+				100 * SUM(CASE WHEN e.EQUIP_STATUS = 'RUNNING' THEN 1 ELSE 0 END)
+				/ NULLIF(COUNT(*), 0),
+				1
+			) AS value
+		FROM EQUIPMENT e
+		GROUP BY e.EQUIP_CODE
+		ORDER BY e.EQUIP_CODE
+	</select>
 
-	<!-- 6️번 설비별 가동률 (테이블 생성 후 작성 예정) <select id="selectEquipmentOEE" resultType="map"> 
-		SELECT EQUIPMENT_NAME AS LABEL, ROUND(100 * SUM(CASE WHEN STATUS='RUNNING' 
-		THEN 1 ELSE 0 END)/COUNT(*),1) AS VALUE FROM EQUIPMENT_STATUS GROUP BY EQUIPMENT_NAME 
-		ORDER BY EQUIPMENT_NAME </select> -->
-
-
-	<!-- 7️번 승인 요청 상태 (테이블 생성 후 작성 예정) <select id="selectApprovalStatus" resultType="map"> 
-		SELECT STATUS AS LABEL, COUNT(*) AS VALUE FROM APPROVAL_REQUEST GROUP BY 
-		STATUS ORDER BY STATUS </select> -->
+	<!-- 7️⃣ 승인 요청 상태 -->
+	<select id="selectApprovalStatus" resultType="kr.or.mes2.dto.DashboardDTO">
+		SELECT
+			STATUS AS label,
+			COUNT(*) AS value
+		FROM APPROVAL_REQUEST
+		GROUP BY STATUS
+		ORDER BY STATUS
+	</select>
 
 </mapper>

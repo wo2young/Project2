@@ -1,11 +1,10 @@
 package kr.or.mes2.controller;
 
-import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-
+import kr.or.mes2.dto.DashboardDTO;
 import kr.or.mes2.service.DashboardService;
 
 @Controller
@@ -17,14 +16,21 @@ public class DashboardController {
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         try {
-            Map<String,Object> summary = service.getTodaySummary();
-            int todayProd = ((Number)summary.get("GOOD")).intValue();
-            int todayDef = ((Number)summary.get("DEFECT")).intValue();
-            double defectRate = (todayProd + todayDef) == 0 ? 0
-                : Math.round((double)todayDef / (todayProd + todayDef) * 10000) / 100.0;
+            DashboardDTO summary = service.getTodaySummary();
 
-            model.addAttribute("todayProd", todayProd);
-            model.addAttribute("todayDef", todayDef);
+            // summary가 null일 경우 대비
+            if (summary == null) {
+                summary = new DashboardDTO();
+                summary.setGoodQty(0);
+                summary.setDefectQty(0);
+            }
+
+            int todayProd = summary.getGoodQty();
+            int todayDef = summary.getDefectQty();
+            double defectRate = (todayProd + todayDef) == 0 ? 0
+                    : Math.round((double) todayDef / (todayProd + todayDef) * 10000) / 100.0;
+
+            model.addAttribute("summary", summary);
             model.addAttribute("defectRate", defectRate);
 
             model.addAttribute("weeklyProd", service.getWeeklyProduction());

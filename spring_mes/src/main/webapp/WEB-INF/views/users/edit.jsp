@@ -100,11 +100,11 @@ input:focus, select:focus {
     </c:if>
 
     <form method="post" action="${pageContext.request.contextPath}/users/edit">
-      <input type="hidden" name="user_id" value="${u.user_id}">
+      <input type="hidden" name="userId" value="${u.userId}">
 
       <div class="form-group">
         <label>로그인 ID</label>
-        <p style="margin:0; color:var(--text);">${u.login_id}</p>
+        <p style="margin:0; color:var(--text);">${u.loginId}</p>
       </div>
 
       <div class="form-group">
@@ -113,11 +113,11 @@ input:focus, select:focus {
       </div>
 
       <div class="form-group">
-        <label for="user_role">권한</label>
-        <select name="user_role" id="user_role">
-          <option value="ADMIN" <c:if test="${u.user_role eq 'ADMIN'}">selected</c:if>>ADMIN</option>
-          <option value="MANAGER" <c:if test="${u.user_role eq 'MANAGER'}">selected</c:if>>MANAGER</option>
-          <option value="WORKER" <c:if test="${u.user_role eq 'WORKER'}">selected</c:if>>WORKER</option>
+        <label for="role">권한</label>
+        <select name="role" id="role">
+          <option value="ADMIN" <c:if test="${u.role eq 'ADMIN'}">selected</c:if>>ADMIN</option>
+          <option value="MANAGER" <c:if test="${u.role eq 'MANAGER'}">selected</c:if>>MANAGER</option>
+          <option value="WORKER" <c:if test="${u.role eq 'WORKER'}">selected</c:if>>WORKER</option>
         </select>
       </div>
 

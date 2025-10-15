@@ -75,7 +75,7 @@ public class UserController {
     // 수정 처리
     @PostMapping("/edit")
     public String edit(@ModelAttribute UserDTO dto, Model model) {
-        boolean ok = userService.updateBasic(dto);
+    	boolean ok = userService.updateMyInfo(dto);
         if (!ok) {
             model.addAttribute("error", "입력값을 확인하세요.");
             model.addAttribute("u", dto);

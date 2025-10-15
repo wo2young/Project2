@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:context="http://www.springframework.org/schema/context"
-	xsi:schemaLocation="
-		http://www.springframework.org/schema/beans 
-		https://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/context 
-		https://www.springframework.org/schema/context/spring-context.xsd">
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+          http://www.springframework.org/schema/beans 
+          https://www.springframework.org/schema/beans/spring-beans.xsd
+          http://www.springframework.org/schema/context 
+          https://www.springframework.org/schema/context/spring-context.xsd">
 
-	<!-- ✅ MyBatis 설정 파일 포함 -->
-	<import resource="mybatis.xml"/>
+    <!-- ✅ 어노테이션 기반 설정 활성화 -->
+    <context:annotation-config />
 
-	<!-- ✅ DAO, Service, Controller 자동 스캔 -->
-	<context:component-scan base-package="kr.or.human99" />
+    <!-- ✅ MyBatis 설정 -->
+    <import resource="mybatis.xml"/>
+
+    <!-- ⚠️ 이 줄 삭제 -->
+    <!-- <bean class="kr.or.mes2.config.CryptoConfig" /> -->
+
+    <!-- ✅ 패키지 스캔 (config 포함 전체) -->
+    <context:component-scan base-package="kr.or.mes2" />
 
 </beans>

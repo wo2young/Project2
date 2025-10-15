@@ -18,19 +18,21 @@ public class UserDAO {
 
     private static final String NS = "kr.or.mes2.mappers.UserMapper.";
 
-    // 조회 관련
+    /* ============================================================
+       조회 관련
+       ============================================================ */
+
+    // 로그인 시 아이디로 사용자 조회
     public UserDTO findByLoginId(String loginId) {
         return sqlSession.selectOne(NS + "findByLoginId", loginId);
     }
 
+    // 단일 사용자 (PK 기준)
     public UserDTO findById(int userId) {
         return sqlSession.selectOne(NS + "findById", userId);
     }
 
-    public int count(String q) {
-        return sqlSession.selectOne(NS + "count", q);
-    }
-
+    // 관리자 목록 조회
     public List<UserDTO> list(String q, int p, int size) {
         Map<String, Object> map = new HashMap<>();
         map.put("q", q);
@@ -39,24 +41,36 @@ public class UserDAO {
         return sqlSession.selectList(NS + "list", map);
     }
 
+    // 총 개수
+    public int count(String q) {
+        return sqlSession.selectOne(NS + "count", q);
+    }
+
+    // 단일 find (기존용)
     public UserDTO find(int id) {
         return sqlSession.selectOne(NS + "find", id);
     }
 
+    // 로그인 아이디 중복 여부
     public boolean existsByLoginId(String loginId) {
         Boolean result = sqlSession.selectOne(NS + "existsByLoginId", loginId);
         return result != null && result;
     }
 
-    // 등록/수정 관련
+    /* ============================================================
+       등록 / 수정 관련
+       ============================================================ */
+
+    // 신규 사용자 등록
     public void insert(UserDTO dto) {
         sqlSession.insert(NS + "insert", dto);
     }
 
-    public boolean updateBasic(UserDTO dto) {
-        return sqlSession.update(NS + "updateBasic", dto) > 0;
+    public boolean updateMyInfo(UserDTO dto) {
+        return sqlSession.update(NS + "updateMyInfo", dto) > 0;
     }
 
+    // 비밀번호 변경 (마이페이지)
     public void updatePassword(int userId, String newHashedPw) {
         Map<String, Object> param = new HashMap<>();
         param.put("userId", userId);
@@ -64,14 +78,19 @@ public class UserDAO {
         sqlSession.update(NS + "updatePassword", param);
     }
 
-    // 비밀번호 리셋 관련
-    public boolean updateResetToken(int id, String token) {
+    /* ============================================================
+       비밀번호 리셋 관련
+       ============================================================ */
+
+    // 리셋 토큰 발급
+    public boolean updateResetToken(int userId, String token) {
         Map<String, Object> map = new HashMap<>();
-        map.put("id", id);
+        map.put("userId", userId);
         map.put("token", token);
         return sqlSession.update(NS + "updateResetToken", map) > 0;
     }
 
+    // 토큰 기반 사용자 조회
     public UserDTO findByLoginIdAndToken(String loginId, String token) {
         Map<String, Object> map = new HashMap<>();
         map.put("loginId", loginId);
@@ -79,6 +98,7 @@ public class UserDAO {
         return sqlSession.selectOne(NS + "findByLoginIdAndToken", map);
     }
 
+    // 토큰 기반 비밀번호 업데이트
     public int updatePasswordWithToken(String loginId, String token, String hashedPw) {
         Map<String, Object> map = new HashMap<>();
         map.put("loginId", loginId);
@@ -86,7 +106,8 @@ public class UserDAO {
         map.put("password", hashedPw);
         return sqlSession.update(NS + "updatePasswordWithToken", map);
     }
-    
+
+    // 리셋 정보 초기화
     public void clearResetByUserId(int userId) {
         sqlSession.update(NS + "clearResetByUserId", userId);
     }

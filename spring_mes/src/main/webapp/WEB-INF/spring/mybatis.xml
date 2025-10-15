@@ -13,36 +13,55 @@
 			<value>/WEB-INF/config/jdbc/jdbc.properties</value>
 		</property>
 	</bean>
-	
+
 	<!-- DB 접속 -->
-	<bean id="dataSource" class="org.apache.ibatis.datasource.pooled.PooledDataSource">
+	<bean id="dataSource"
+		class="org.apache.ibatis.datasource.pooled.PooledDataSource">
 		<property name="driver" value="${jdbc.driverClassName}"></property>
 		<property name="url" value="${jdbc.url}"></property>
 		<property name="username" value="${jdbc.username}"></property>
 		<property name="password" value="${jdbc.password}"></property>
 	</bean>
-	
-	    <!-- sql 출력을 위한 proxy (스파이, VPN) -->
-     <bean id="dataSource2" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
-       <constructor-arg ref="dataSource" />
-       <property name="logFormatter">
-         <bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
-           <property name="loggingType" value="MULTI_LINE" />
-           <property name="sqlPrefix" value="SQL : "/>
-         </bean>
-       </property>
-     </bean>
 
-	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	<!-- sql 출력을 위한 proxy (스파이, VPN) -->
+	<bean id="dataSource2"
+		class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+		<constructor-arg ref="dataSource" />
+		<property name="logFormatter">
+			<bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+				<property name="loggingType" value="MULTI_LINE" />
+				<property name="sqlPrefix" value="SQL : " />
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="sqlSessionFactory"
+		class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource2"></property>
-		<property name="configLocation" value="classpath:mybatis/model/modelConfig.xml"></property>
+		<property name="configLocation"
+			value="classpath:mybatis/model/modelConfig.xml"></property>
 	</bean>
 
 
-	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+	<bean id="sqlSession"
+		class="org.mybatis.spring.SqlSessionTemplate">
 		<constructor-arg index="0" ref="sqlSessionFactory"></constructor-arg>
 	</bean>
 
+	<bean id="mailSender"
+		class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="587" />
+		<property name="username" value="your_email@gmail.com" />
+		<property name="password" value="your_app_password" />
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtp.auth">true</prop>
+				<prop key="mail.smtp.starttls.enable">true</prop>
+				<prop key="mail.debug">true</prop>
+			</props>
+		</property>
+	</bean>
 </beans>
 
 

@@ -13,7 +13,7 @@
       --card: #111827;
       --line: #1f2b45;
       --line2: #4b5563;
-      --text: #e6ebff;   /* 입력 글씨 흰색 */
+      --text: #e6ebff;
       --muted: #a7b0c5;
       --input-bg: #1a202c;
       --primary: #f59e0b;
@@ -69,9 +69,7 @@
       margin-bottom: 14px;
     }
 
-    .field {
-      margin: 16px 0;
-    }
+    .field { margin: 16px 0; }
 
     .label {
       display: block;
@@ -88,38 +86,15 @@
       background: var(--input-bg);
       padding: 0 12px;
       font-size: 14px;
+      color: #e6ebff !important;
+      -webkit-text-fill-color: #e6ebff !important;
+      caret-color: #e6ebff !important;
       outline: none;
       box-sizing: border-box;
-
-      /* ✅ 항상 흰색 유지 */
-      color: #e6ebff !important;
-      -webkit-text-fill-color: #e6ebff !important;
-      caret-color: #e6ebff !important;
     }
 
-    /* focus 있을 때 */
     .input:focus {
-      color: #e6ebff !important;
-      -webkit-text-fill-color: #e6ebff !important;
-      caret-color: #e6ebff !important;
-    }
-
-    /* 값이 있을 때 (포커스 없어도) */
-    .input:not(:placeholder-shown) {
-      color: #e6ebff !important;
-      -webkit-text-fill-color: #e6ebff !important;
-      caret-color: #e6ebff !important;
-    }
-
-    /* 크롬 자동완성 대응 */
-    input:-webkit-autofill,
-    input:-webkit-autofill:focus,
-    input:-webkit-autofill:hover,
-    input:-webkit-autofill:active {
-      -webkit-text-fill-color: #e6ebff !important;
-      caret-color: #e6ebff !important;
-      box-shadow: 0 0 0px 1000px var(--input-bg) inset !important;
-      background: var(--input-bg) !important;
+      border-color: var(--primary);
     }
 
     .btn {
@@ -145,32 +120,45 @@
       color: var(--muted);
       font-size: 12px;
       margin-top: 16px;
+      line-height: 1.5;
     }
   </style>
 </head>
+
 <body>
   <main class="card">
     <h1 class="brand">MES System</h1>
     <p class="subtitle">음료수 공장 관리 시스템</p>
 
-    <!-- 에러 메시지 -->
-    <c:if test="${not empty errorMsg}">
-      <div class="error">${errorMsg}</div>
+    <!-- ✅ 에러 메시지 (Controller에서 model.addAttribute("error", "...") 로 전달됨) -->
+    <c:if test="${not empty error}">
+      <div class="error">${error}</div>
     </c:if>
 
+    <!-- ✅ 로그인 폼 -->
     <form method="post" action="${pageContext.request.contextPath}/login" accept-charset="UTF-8">
       <div class="field">
         <label class="label" for="loginId">사용자 ID</label>
         <input class="input" id="loginId" name="loginId" type="text"
                autocomplete="username" placeholder="아이디를 입력하세요" required />
       </div>
+
       <div class="field">
         <label class="label" for="password">비밀번호</label>
         <input class="input" id="password" name="password" type="password"
-               autocomplete="current-password" placeholder="비밀번호를 입력하세요" required />
+               autocomplete="current-password" placeholder="비밀번호 또는 리셋코드를 입력하세요" required />
       </div>
+
       <button class="btn" type="submit">로그인</button>
-      <p class="helper">환영합니다 👋</p>
+
+      <!-- ✅ 안내 문구 / 링크 -->
+      <p class="helper">
+        비밀번호 대신 <strong>리셋코드</strong>로도 로그인할 수 있습니다.<br>
+        <a href="${pageContext.request.contextPath}/password/reset"
+           style="color: var(--primary); text-decoration: none; font-weight: 600;">
+           비밀번호를 잊으셨나요?
+        </a>
+      </p>
     </form>
   </main>
 </body>

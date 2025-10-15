@@ -7,6 +7,7 @@
 
   <settings>
     <setting name="jdbcTypeForNull" value="NULL"/>
+    <setting name="mapUnderscoreToCamelCase" value="true"/>
   </settings>
 
   <typeAliases>
@@ -15,10 +16,7 @@
   </typeAliases>
 
   <mappers>
-    <!-- ✅ 기존 매퍼 유지 -->
     <mapper resource="mybatis/mappers/DashboardMapper.xml"/>
-
-    <!-- ✅ 새로 추가된 로그인용 매퍼 -->
     <mapper resource="mybatis/mappers/UserMapper.xml"/>
   </mappers>
 

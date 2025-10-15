@@ -1,23 +1,13 @@
 package kr.or.mes2.dto;
 
-import java.util.List;
-import java.util.Map;
+import lombok.Data;
 
+@Data
 public class DashboardDTO {
-    private int todayProduction;
-    private int todayDefect;
-    private int totalInventory;
-    private List<Map<String, Object>> defectStatus; // 불량별 현황 리스트 추가
-
-    public int getTodayProduction() { return todayProduction; }
-    public void setTodayProduction(int todayProduction) { this.todayProduction = todayProduction; }
-
-    public int getTodayDefect() { return todayDefect; }
-    public void setTodayDefect(int todayDefect) { this.todayDefect = todayDefect; }
-
-    public int getTotalInventory() { return totalInventory; }
-    public void setTotalInventory(int totalInventory) { this.totalInventory = totalInventory; }
-
-    public List<Map<String, Object>> getDefectStatus() { return defectStatus; }
-    public void setDefectStatus(List<Map<String, Object>> defectStatus) { this.defectStatus = defectStatus; }
+    private int goodQty;       // 양품 수량 (GOOD_QTY)
+    private int defectQty;     // 불량 수량 (DEFECT_QTY)
+    private String label;      // 그래프용 라벨 (예: 날짜, 품목명 등)
+    private int value;         // 그래프 값 (예: 수량, 퍼센트 등)
+    private int targetQty;     // 목표 수량 (PRODUCTION_TARGET)
+    private int resultQty;     // 실적 수량 (PRODUCTION_RESULT)
 }

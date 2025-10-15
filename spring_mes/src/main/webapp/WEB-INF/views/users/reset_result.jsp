@@ -68,11 +68,15 @@ a:hover {
 <body>
   <div class="result-box">
     <h2>리셋 코드 발급 완료</h2>
-    <p>사용자: <strong>${target.name}</strong> (${target.login_id})</p>
+
+    <!-- ✅ 최신 UserDTO 기준으로 수정 -->
+    <p>사용자: <strong>${target.name}</strong> (${target.loginId})</p>
     <p>유효 시간: 1시간</p>
     <p>리셋 코드: <b>${token}</b></p>
-    <%-- <p>${email}로 발송되었습니다.</p> --%>
-
+    
+    <%-- 이메일 발송 기능 활성화 시 표시 예정 --%>
+    <%-- <p>${target.email}로 발송되었습니다.</p> --%>
+    
     <a href="${pageContext.request.contextPath}/users">목록으로 돌아가기</a>
   </div>
 </body>

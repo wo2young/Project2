@@ -7,7 +7,7 @@
 
 <c:choose>
   <c:when test="${not empty user}">
-    <c:set var="roleRaw" value="${user.user_role}" />
+    <c:set var="roleRaw" value="${user.role}" />
   </c:when>
   <c:otherwise>
     <c:set var="roleRaw" value="" />

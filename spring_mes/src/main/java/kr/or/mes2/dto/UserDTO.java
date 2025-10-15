@@ -1,31 +1,37 @@
 package kr.or.mes2.dto;
 
-import java.sql.Timestamp;
+import java.util.Date;
 import lombok.Data;
 
-/*
- [Lombok 주요 어노테이션 정리]
- @Data        : Getter + Setter + toString + equals + hashCode + RequiredArgsConstructor
- @NoArgsConstructor / @AllArgsConstructor : 생성자 자동 생성
- @Builder     : 빌더 패턴 지원
-*/
+/**
+ * UserDTO
+ * 
+ * USER_T 테이블 구조에 1:1로 대응
+ * 이메일, 전화번호, 주소 등은 양방향 암호화 대상
+ * 비밀번호는 단방향(BCrypt 해시)
+ */
 
-// DTO는 대부분 단순 데이터 전달용이라 @Data 하나면 충분
 @Data
 public class UserDTO {
 
-    private int user_id;          // 사용자 고유번호 (PK)
-    private String login_id;      // 로그인 ID
-    private String password;      // 암호화된 비밀번호
-    private String name;          // 이름
-    private String user_role;     // 역할 (Admin / Manager / Worker)
-    private Timestamp created_at; // 생성일
-    private Timestamp updated_at; // 수정일
-    
-    private String email; // 추후 메일 발송용
-    // phone, birth_date, postal_code, address, address_detail
+    // 기본 정보
+    private Integer userId;        // USER_ID (PK)
+    private String  loginId;       // LOGIN_ID (Unique)
+    private String  password;      // PASSWORD (BCrypt 해시)
+    private String  name;          // NAME
+    private String  email;         // EMAIL (암호화 대상)
+    private String  phone;         // PHONE (암호화 대상)
+    private String  birthdate;     // BIRTHDATE (암호화 대상)
+    private String  zipcode;       // ZIPCODE
+    private String  address;       // ADDRESS (암호화 대상)
+    private String  addressDetail; // ADDRESS_DETAIL (암호화 대상)
+    private String  role;          // ROLE (ADMIN / MANAGER / WORKER 등)
 
-    // 비밀번호 초기화용
-    private String reset_token;
-    private Timestamp reset_expires;
+    // 메타 정보
+    private Date    createdAt;     // CREATED_AT
+    private Date    updatedAt;     // UPDATED_AT
+
+    // 비밀번호 리셋 관련
+    private String  resetToken;    // RESET_TOKEN
+    private Date    tokenExpireAt; // TOKEN_EXPIRE_AT
 }
