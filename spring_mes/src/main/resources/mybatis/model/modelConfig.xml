@@ -13,11 +13,14 @@
   <typeAliases>
     <typeAlias type="kr.or.mes2.dto.DashboardDTO" alias="DashboardDTO"/>
     <typeAlias type="kr.or.mes2.dto.UserDTO" alias="UserDTO"/>
+    <typeAlias type="kr.or.mes2.dto.TargetDTO" alias="TargetDTO"/>
   </typeAliases>
 
   <mappers>
     <mapper resource="mybatis/mappers/DashboardMapper.xml"/>
     <mapper resource="mybatis/mappers/UserMapper.xml"/>
+    <mapper resource="mybatis/mappers/TargetMapper.xml"/>
+    
   </mappers>
 
 </configuration>
