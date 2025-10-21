@@ -1,16 +1,20 @@
 package kr.or.mes2.dto;
 
-import java.sql.Timestamp;
-
 import lombok.Data;
+import java.sql.Timestamp;
 
 @Data
 public class BomDTO {
-	private int bomId;		//bom고유아이디
-	private int parenItemId;	//완제품 아이디 >> 디테일 코드로 구분 가능
-	private int childItemId;	//반제품 및 원료 아이디 >> 디테일 코드로 구분 가능
-	private int quantity;		//수량
-	private String status;		//상태
-	private Timestamp createAt; //처음 생성일
-	private Timestamp updateAt; //갱신일(비활성화 시각 상태값 변경시 적용)
+    private int bomId;             // BOM_ID
+    private int parentItem;        // PARENT_ITEM
+    private int childItem;         // CHILD_ITEM
+    private double requiredQty;    // REQUIRED_QTY
+    private String status;         // STATUS (Y/N)
+    private Timestamp createdAt;   // CREATED_AT
+    private Timestamp updatedAt;   // UPDATED_AT
+
+    // 조회용
+    private String parentItemName; // 상위 품목명
+    private String childItemName;  // 하위 자재명
+    private String childUnit;      // 하위 자재 단위
 }
