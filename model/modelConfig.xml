@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+  <settings>
+    <setting name="jdbcTypeForNull" value="NULL"/>
+    <setting name="mapUnderscoreToCamelCase" value="true"/>
+  </settings>
+
+  <typeAliases>
+    <typeAlias type="kr.or.mes2.dto.DashboardDTO" alias="DashboardDTO"/>
+    <typeAlias type="kr.or.mes2.dto.UserDTO" alias="UserDTO"/>
+    <typeAlias type="kr.or.mes2.dto.BoardPostDTO" alias="BoardPostDTO"/>
+    <typeAlias type="kr.or.mes2.dto.BoardCategoryDTO" alias="BoardCategoryDTO"/>
+    <typeAlias type="kr.or.mes2.dto.BoardAttachmentDTO" alias="BoardAttachmentDTO"/>
+    <typeAlias type="kr.or.mes2.dto.BoardCommentDTO" alias="BoardCommentDTO"/>
+  </typeAliases>
+
+  <mappers>
+    <mapper resource="mybatis/mappers/DashboardMapper.xml"/>
+    <mapper resource="mybatis/mappers/UserMapper.xml"/>
+    <mapper resource="mybatis/mappers/BoardMapper.xml"/>
+  </mappers>
+
+</configuration>
