@@ -154,7 +154,7 @@
     <a href="${cxt}/inventory/in/new">재고 관리</a>
     <a href="${cxt}/board" class="${isBoard ? 'active' : ''}">게시판</a>
     <c:if test="${user != null && roleRaw != null && roleRaw.toUpperCase() == 'ADMIN'}">
-      <a href="${cxt}/master">기준 관리</a>
+      <a href="${cxt}/master/code">기준 관리</a>
       <a href="${cxt}/users">사용자 관리</a>
     </c:if>
   </nav>
@@ -183,7 +183,7 @@
   <a href="${cxt}/inventory/in/new">재고 관리</a>
   <a href="${cxt}/board" class="${isBoard ? 'active' : ''}">게시판</a>
   <c:if test="${user != null && roleRaw != null && roleRaw.toUpperCase() == 'ADMIN'}">
-    <a href="${cxt}/master">기준 관리</a>
+    <a href="${cxt}/master/code">기준 관리</a>
     <a href="${cxt}/users">사용자 관리</a>
   </c:if>
 </nav>
