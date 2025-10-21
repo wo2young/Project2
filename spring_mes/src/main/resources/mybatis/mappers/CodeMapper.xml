@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mappers.CodeMapper">
+
+  <!-- ===================== 마스터 목록 ===================== -->
+  <select id="getMasterList" resultType="kr.or.mes2.dto.CodeDTO">
+    SELECT CODE_ID AS codeId,
+           CODE_NAME AS codeName
+      FROM CODE_MASTER
+     ORDER BY CODE_ID
+  </select>
+
+  <!-- ===================== 디테일 목록 ===================== -->
+  <select id="getDetailList" parameterType="map" resultType="kr.or.mes2.dto.CodeDTO">
+    SELECT DETAIL_CODE AS detailCode,
+           CODE_ID      AS codeId,
+           DETAIL_NAME  AS detailName,
+           USE_YN       AS detailUseYn
+      FROM CODE_DETAIL
+     WHERE 1=1
+     <if test="codeId != null and codeId != ''">
+       AND CODE_ID = #{codeId}
+     </if>
+     <if test="keyword != null and keyword != ''">
+       AND (UPPER(REPLACE(DETAIL_CODE, '-', '')) LIKE '%' || UPPER(REPLACE(#{keyword}, '-', '')) || '%'
+         OR UPPER(REPLACE(DETAIL_NAME, '-', '')) LIKE '%' || UPPER(REPLACE(#{keyword}, '-', '')) || '%')
+     </if>
+     ORDER BY DETAIL_CODE
+  </select>
+
+  <!-- ===================== 마스터 CRUD ===================== -->
+  <insert id="insertMaster" parameterType="kr.or.mes2.dto.CodeDTO">
+    INSERT INTO CODE_MASTER (CODE_ID, CODE_NAME)
+    VALUES (#{codeId}, #{codeName})
+  </insert>
+
+  <update id="updateMaster" parameterType="kr.or.mes2.dto.CodeDTO">
+    UPDATE CODE_MASTER
+       SET CODE_NAME = #{codeName}
+     WHERE CODE_ID = #{codeId}
+  </update>
+
+  <delete id="deleteMaster" parameterType="string">
+    DELETE FROM CODE_MASTER WHERE CODE_ID = #{codeId}
+  </delete>
+
+  <!-- ===================== 디테일 CRUD ===================== -->
+  <insert id="insertDetail" parameterType="kr.or.mes2.dto.CodeDTO">
+    INSERT INTO CODE_DETAIL (DETAIL_CODE, CODE_ID, DETAIL_NAME, USE_YN)
+    VALUES (#{detailCode}, #{codeId}, #{detailName}, #{detailUseYn})
+  </insert>
+
+  <update id="updateDetail" parameterType="kr.or.mes2.dto.CodeDTO">
+    UPDATE CODE_DETAIL
+       SET DETAIL_NAME = #{detailName},
+           USE_YN = #{detailUseYn}
+     WHERE DETAIL_CODE = #{detailCode}
+  </update>
+
+  <delete id="deleteDetail" parameterType="string">
+    DELETE FROM CODE_DETAIL WHERE DETAIL_CODE = #{detailCode}
+  </delete>
+
+  <!-- ✅ 디테일 참조 카운트 (아이템, BOM, 라우팅) -->
+  <select id="countAllRefByDetailCode" parameterType="string" resultType="int">
+    SELECT
+        NVL((SELECT COUNT(1)
+               FROM ITEM_MASTER
+              WHERE ITEM_DETAIL_CODE = #{detailCode}), 0)
+      + NVL((SELECT COUNT(1)
+               FROM BOM b
+              WHERE EXISTS (
+                    SELECT 1
+                      FROM ITEM_MASTER i
+                     WHERE i.ITEM_ID = b.CHILD_ITEM
+                       AND i.ITEM_DETAIL_CODE = #{detailCode}
+              )), 0)
+      + NVL((SELECT COUNT(1)
+               FROM ROUTING r
+              WHERE EXISTS (
+                    SELECT 1
+                      FROM ITEM_MASTER i
+                     WHERE i.ITEM_ID = r.ITEM_ID
+                       AND i.ITEM_DETAIL_CODE = #{detailCode}
+              )), 0)
+      AS refCount
+      FROM DUAL
+  </select>
+
+</mapper>

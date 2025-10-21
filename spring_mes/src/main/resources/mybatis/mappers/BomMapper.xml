@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mappers.BomMapper">
+
+	<select id="getNextBomId" resultType="int">
+		SELECT NVL(MAX(BOM_ID), 0) + 1 FROM BOM
+	</select>
+
+	<select id="getBomList" parameterType="map" resultType="kr.or.mes2.dto.BomDTO">
+		SELECT
+			b.BOM_ID AS bomId,
+			b.PARENT_ITEM AS parentItem,
+			b.CHILD_ITEM AS childItem,
+			b.REQUIRED_QTY AS requiredQty,
+			b.STATUS AS status,
+			b.CREATED_AT AS createdAt,
+			b.UPDATED_AT AS updatedAt,
+			p.ITEM_NAME AS parentItemName,
+			c.ITEM_NAME AS childItemName,
+			c.UNIT AS childUnit
+		FROM BOM b
+			JOIN ITEM_MASTER p ON b.PARENT_ITEM = p.ITEM_ID
+			JOIN ITEM_MASTER c ON b.CHILD_ITEM = c.ITEM_ID
+			JOIN CODE_DETAIL cd ON c.ITEM_DETAIL_CODE = cd.DETAIL_CODE
+		<where>
+			<if test="keyword != null and keyword != ''">
+				AND (p.ITEM_NAME LIKE '%' || #{keyword} || '%' 
+				OR c.ITEM_NAME LIKE '%' || #{keyword} || '%')
+			</if>
+			<if test="type != null and type != ''">
+				AND p.ITEM_TYPE_CODE = #{type}
+			</if>
+			AND cd.USE_YN = 'Y'
+		</where>
+		ORDER BY b.BOM_ID DESC
+	</select>
+
+	<select id="countDuplicate" parameterType="kr.or.mes2.dto.BomDTO" resultType="int">
+		SELECT COUNT(1)
+		FROM BOM
+		WHERE PARENT_ITEM = #{parentItem}
+		  AND CHILD_ITEM = #{childItem}
+		<if test="bomId != null and bomId != 0">
+			AND BOM_ID &lt;&gt; #{bomId}
+		</if>
+	</select>
+
+	<select id="countParentReference" parameterType="int" resultType="int">
+		SELECT COUNT(1) FROM BOM WHERE PARENT_ITEM = #{childItem}
+	</select>
+
+	<insert id="insertBom" parameterType="kr.or.mes2.dto.BomDTO">
+		INSERT INTO BOM (
+			BOM_ID, PARENT_ITEM, CHILD_ITEM, REQUIRED_QTY, STATUS, CREATED_AT
+		) VALUES (
+			#{bomId}, #{parentItem}, #{childItem}, #{requiredQty}, #{status}, SYSDATE
+		)
+	</insert>
+
+	<update id="updateBom" parameterType="kr.or.mes2.dto.BomDTO">
+		UPDATE BOM
+		SET 
+			PARENT_ITEM = #{parentItem},
+			CHILD_ITEM = #{childItem},
+			REQUIRED_QTY = #{requiredQty},
+			STATUS = #{status},
+			UPDATED_AT = SYSDATE
+		WHERE BOM_ID = #{bomId}
+	</update>
+
+	<delete id="deleteBom" parameterType="int">
+		DELETE FROM BOM WHERE BOM_ID = #{bomId}
+	</delete>
+
+	<select id="getParentItems" resultType="kr.or.mes2.dto.ItemMasterDTO">
+		SELECT 
+			i.ITEM_ID AS itemId,
+			i.ITEM_NAME AS itemName,
+			i.ITEM_TYPE_CODE AS itemTypeCode,
+			i.ITEM_DETAIL_CODE AS detailCode,
+			i.UNIT AS unit,
+			i.SPECIFICATION AS itemSpec,
+			cd.USE_YN AS detailUseYn
+		FROM ITEM_MASTER i
+			JOIN CODE_DETAIL cd ON i.ITEM_DETAIL_CODE = cd.DETAIL_CODE
+		WHERE i.ITEM_TYPE_CODE IN ('PCD','SGD')
+		  AND cd.USE_YN = 'Y'
+		ORDER BY i.ITEM_ID
+	</select>
+
+	<select id="getChildItems" resultType="kr.or.mes2.dto.ItemMasterDTO">
+		SELECT 
+			i.ITEM_ID AS itemId,
+			i.ITEM_NAME AS itemName,
+			i.ITEM_TYPE_CODE AS itemTypeCode,
+			i.ITEM_DETAIL_CODE AS detailCode,
+			i.UNIT AS unit,
+			i.SPECIFICATION AS itemSpec,
+			cd.USE_YN AS detailUseYn
+		FROM ITEM_MASTER i
+			JOIN CODE_DETAIL cd ON i.ITEM_DETAIL_CODE = cd.DETAIL_CODE
+		WHERE i.ITEM_TYPE_CODE IN ('SGD','RMD')
+		  AND cd.USE_YN = 'Y'
+		ORDER BY i.ITEM_ID
+	</select>
+
+</mapper>

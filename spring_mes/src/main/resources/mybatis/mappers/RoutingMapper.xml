@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mappers.RoutingMapper">
+
+	<!-- 제품 선택용 -->
+	<select id="selectItemOptions" resultType="map">
+		SELECT ITEM_ID AS itemId, ITEM_NAME AS itemName
+		FROM ITEM_MASTER
+		WHERE ITEM_TYPE_CODE IN ('SGD','PCD')
+		ORDER BY ITEM_NAME
+	</select>
+
+	<!-- 설비 선택용 -->
+	<select id="selectEquipOptions" resultType="map">
+		SELECT
+		DETAIL_CODE AS equipCode,
+		DETAIL_NAME AS equipName
+		FROM CODE_DETAIL
+		WHERE CODE_ID = 'EQP'
+		AND USE_YN = 'Y'
+		ORDER BY DETAIL_CODE
+	</select>
+
+	<!-- 공정 전체 목록 -->
+	<select id="selectRoutingList" parameterType="map"
+		resultType="kr.or.mes2.dto.RoutingDTO">
+		SELECT
+		r.ROUTING_ID AS routingId,
+		r.ITEM_ID AS itemId,
+		i.ITEM_NAME AS itemName,
+		r.PROCESS_STEP AS processStep,
+		r.EQUIP_CODE AS equipCode,
+		cd.DETAIL_NAME AS equipName,
+		r.IMG_PATH AS imgPath,
+		r.REMARK AS remark
+		FROM ROUTING r
+		JOIN ITEM_MASTER i ON r.ITEM_ID = i.ITEM_ID
+		LEFT JOIN CODE_DETAIL cd ON r.EQUIP_CODE = cd.DETAIL_CODE
+		<where>
+			<if test="itemId != null"> AND r.ITEM_ID = #{itemId} </if>
+			<if test="keyword != null and keyword != ''">
+				AND (i.ITEM_NAME LIKE '%' || #{keyword} || '%' OR cd.DETAIL_NAME LIKE
+				'%' || #{keyword} || '%')
+			</if>
+		</where>
+		ORDER BY r.ITEM_ID, r.PROCESS_STEP
+	</select>
+
+	<!-- 단일 조회 -->
+	<select id="findById" parameterType="int"
+		resultType="kr.or.mes2.dto.RoutingDTO">
+		SELECT ROUTING_ID AS routingId, ITEM_ID AS itemId, PROCESS_STEP AS
+		processStep,
+		EQUIP_CODE AS equipCode, IMG_PATH AS imgPath, REMARK AS remark
+		FROM ROUTING
+		WHERE ROUTING_ID = #{routingId}
+	</select>
+
+	<!-- 등록 -->
+	<insert id="insertRouting"
+		parameterType="kr.or.mes2.dto.RoutingDTO">
+		INSERT INTO ROUTING (ROUTING_ID, ITEM_ID, PROCESS_STEP, EQUIP_CODE,
+		IMG_PATH, REMARK)
+		VALUES (SEQ_ROUTING.NEXTVAL, #{itemId}, #{processStep}, #{equipCode},
+		#{imgPath}, #{remark})
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updateRouting"
+		parameterType="kr.or.mes2.dto.RoutingDTO">
+		UPDATE ROUTING
+		SET ITEM_ID = #{itemId},
+		PROCESS_STEP = #{processStep},
+		EQUIP_CODE = #{equipCode},
+		IMG_PATH = #{imgPath},
+		REMARK = #{remark}
+		WHERE ROUTING_ID = #{routingId}
+	</update>
+
+	<!-- 삭제 -->
+	<delete id="deleteRouting" parameterType="int">
+		DELETE FROM ROUTING WHERE ROUTING_ID = #{routingId}
+	</delete>
+
+</mapper>

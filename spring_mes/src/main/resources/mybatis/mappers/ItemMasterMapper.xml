@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mapper.ItemMasterMapper">
+
+    <!-- 매핑 -->
+    <resultMap id="ItemMasterMap" type="kr.or.mes2.dto.ItemMasterDTO">
+        <id property="itemId" column="ITEM_ID" />
+        <result property="itemName" column="ITEM_NAME" />
+        <result property="lotPrefix" column="LOT_PREFIX" />
+        <result property="itemTypeCode" column="ITEM_TYPE_CODE" />
+        <result property="detailCode" column="ITEM_DETAIL_CODE" />
+        <result property="itemSpec" column="SPECIFICATION" />
+        <result property="unit" column="UNIT" />
+        <result property="expDate" column="EXPIRY_DAYS" />
+        <result property="detailName" column="DETAIL_NAME" />
+    </resultMap>
+
+    <!-- 공통 검색 where -->
+    <sql id="ItemMasterWhere">
+        <where>
+            <if test="keyword != null and keyword != ''">
+                (UPPER(i.item_name) LIKE '%' || UPPER(#{keyword}) || '%'
+                OR UPPER(i.item_type_code) LIKE '%' || UPPER(#{keyword}) || '%'
+                OR UPPER(i.item_detail_code) LIKE '%' || UPPER(#{keyword}) || '%')
+            </if>
+            <if test="typeFilter != null and typeFilter != ''">
+                AND i.item_type_code = #{typeFilter}
+            </if>
+        </where>
+    </sql>
+
+    <select id="listItem" parameterType="map" resultMap="ItemMasterMap">
+        SELECT
+            i.item_id,
+            i.item_name,
+            i.lot_prefix,
+            i.item_type_code,
+            i.item_detail_code,
+            i.unit,
+            i.specification,
+            i.expiry_days,
+            dcd.detail_name AS detail_name
+        FROM ITEM_MASTER i
+        LEFT JOIN CODE_DETAIL dcd
+        ON i.item_detail_code = dcd.detail_code
+        AND dcd.use_yn = 'Y'
+        <include refid="ItemMasterWhere" />
+        ORDER BY i.item_id DESC
+    </select>
+
+    <select id="getItemById" parameterType="int" resultMap="ItemMasterMap">
+        SELECT
+            i.item_id,
+            i.item_name,
+            i.lot_prefix,
+            i.item_type_code,
+            i.item_detail_code,
+            i.unit,
+            i.specification,
+            i.expiry_days,
+            dcd.detail_name AS detail_name
+        FROM ITEM_MASTER i
+        LEFT JOIN CODE_DETAIL dcd
+        ON i.item_detail_code = dcd.detail_code
+        AND dcd.use_yn = 'Y'
+        WHERE i.item_id = #{itemId}
+    </select>
+
+    <select id="getNextItemId" resultType="int">
+        SELECT NVL(MAX(item_id), 0) + 1 FROM ITEM_MASTER
+    </select>
+
+    <insert id="insertItem" parameterType="kr.or.mes2.dto.ItemMasterDTO">
+        INSERT INTO ITEM_MASTER
+        (item_id, item_name, lot_prefix, item_type_code, item_detail_code, specification, unit, expiry_days)
+        VALUES (
+            #{itemId},
+            #{itemName},
+            #{lotPrefix},
+            #{itemTypeCode},
+            #{detailCode},
+            #{itemSpec},
+            #{unit},
+            #{expDate}
+        )
+    </insert>
+
+    <update id="updateItem" parameterType="kr.or.mes2.dto.ItemMasterDTO">
+        UPDATE ITEM_MASTER
+        SET item_name = #{itemName},
+            lot_prefix = #{lotPrefix},
+            item_type_code = #{itemTypeCode},
+            item_detail_code = #{detailCode},
+            specification = #{itemSpec},
+            unit = #{unit},
+            expiry_days = #{expDate}
+        WHERE item_id = #{itemId}
+    </update>
+
+    <delete id="deleteItem" parameterType="int">
+        DELETE FROM ITEM_MASTER
+        WHERE item_id = #{itemId}
+    </delete>
+
+    <select id="listItemKindMasterCodes" resultType="kr.or.mes2.dto.CodeDTO">
+        SELECT code_id AS codeId, code_name AS codeName
+        FROM CODE_MASTER
+        WHERE code_id IN ('PCD', 'SGD', 'RMD')
+        ORDER BY code_id
+    </select>
+
+    <select id="listActiveItemKindCodes" resultType="kr.or.mes2.dto.CodeDTO">
+        SELECT
+            d.detail_code AS detailCode,
+            d.detail_name AS detailName
+        FROM CODE_DETAIL d
+        WHERE d.code_id IN ('PCD', 'SGD', 'RMD')
+        AND d.use_yn = 'Y'
+        ORDER BY d.detail_code
+    </select>
+
+    <select id="listAvailableDetailCodes" resultType="kr.or.mes2.dto.CodeDTO" parameterType="string">
+        SELECT
+            d.detail_code AS detailCode,
+            d.detail_name AS detailName
+        FROM CODE_DETAIL d
+        WHERE d.code_id = #{codeId}
+        AND d.use_yn = 'Y'
+        AND (
+            NOT EXISTS (
+                SELECT 1 FROM ITEM_MASTER i
+                WHERE i.item_detail_code = d.detail_code
+            )
+            OR EXISTS (
+                SELECT 1 FROM ITEM_MASTER i
+                WHERE i.item_detail_code = d.detail_code
+                AND (
+                    NVL(REPLACE(TRIM(i.lot_prefix), ' ', ''), '') = ''
+                    OR NVL(REPLACE(TRIM(i.unit), ' ', ''), '') = ''
+                )
+            )
+        )
+        ORDER BY d.detail_code
+    </select>
+
+</mapper>
