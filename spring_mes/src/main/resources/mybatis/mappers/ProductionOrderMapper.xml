@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mappers.ProductionOrderMapper">
+
+	<!-- 생산목표 리스트 -->
+	<select id="getTargetList"
+		resultType="kr.or.mes2.dto.ProductionOrderDTO">
+		SELECT
+		t.TARGET_ID AS targetId,
+		t.ITEM_ID AS itemId,
+		NVL(i.ITEM_NAME,'(미등록 제품)') AS itemName,
+		i.ITEM_TYPE_CODE AS
+		itemTypeCode,
+		t.START_DATE AS targetStartDate,
+		t.END_DATE AS
+		targetEndDate,
+		t.TARGET_QTY AS targetQty
+		FROM PRODUCTION_TARGET t
+		LEFT
+		JOIN ITEM_MASTER i ON t.ITEM_ID = i.ITEM_ID
+		ORDER BY t.TARGET_ID DESC
+	</select>
+
+	<!-- 설비 리스트 -->
+	<select id="getEquipList"
+		resultType="kr.or.mes2.dto.ProductionOrderDTO">
+		SELECT
+		ei.EQUIP_ID AS equipId,
+		ei.EQUIP_NAME AS equipName,
+		ei.EQUIP_CODE AS equipCode,
+		ei.STD_CAPACITY AS stdCapacity,
+		ei.DAILY_CAPACITY AS dailyCapacity,
+		e.EQUIP_STATUS AS equipStatus
+		FROM
+		EQUIPMENT_INFO ei
+		JOIN EQUIPMENT e ON ei.EQUIP_ID = e.EQUIP_ID
+		WHERE
+		ei.ACTIVE_YN='Y'
+		ORDER BY ei.EQUIP_ID
+	</select>
+
+	<!-- 생산지시 리스트 -->
+	<select id="getOrderList"
+		resultType="kr.or.mes2.dto.ProductionOrderDTO">
+		SELECT
+		o.ORDER_ID AS orderId,
+		o.TARGET_ID AS targetId,
+		o.ITEM_ID AS itemId,
+		o.EQUIP_ID AS equipId,
+		o.ORDER_QTY AS orderQty,
+		o.DUE_DATE AS dueDate,
+		o.STATUS AS status,
+		i.ITEM_NAME AS itemName,
+		e.EQUIP_NAME AS equipName
+		FROM PRODUCTION_ORDER o
+		LEFT JOIN ITEM_MASTER
+		i ON o.ITEM_ID=i.ITEM_ID
+		LEFT JOIN EQUIPMENT_INFO e ON
+		o.EQUIP_ID=e.EQUIP_ID
+		ORDER BY o.ORDER_ID DESC
+	</select>
+
+	<!-- 생산지시 등록 -->
+	<insert id="insertOrder"
+		parameterType="kr.or.mes2.dto.ProductionOrderDTO">
+		<selectKey keyProperty="orderId" resultType="int"
+			order="BEFORE">
+			SELECT SEQ_PRODUCTION_ORDER.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO PRODUCTION_ORDER
+		(ORDER_ID, TARGET_ID, ITEM_ID, EQUIP_ID,
+		ORDER_QTY, DUE_DATE, STATUS,
+		CREATED_AT, CREATED_BY)
+		VALUES
+		(#{orderId},
+		#{targetId}, #{itemId}, #{equipId}, #{orderQty}, #{dueDate},
+		'PLANNED', SYSDATE, #{createdBy})
+	</insert>
+
+	<update id="updateOrderStatus">
+		UPDATE PRODUCTION_ORDER SET STATUS=#{status} WHERE
+		ORDER_ID=#{orderId}
+	</update>
+
+	<update id="updateEquipmentStatus">
+		UPDATE EQUIPMENT SET EQUIP_STATUS=#{equipStatus},
+		UPDATED_AT=SYSDATE WHERE
+		EQUIP_ID=#{equipId}
+	</update>
+
+	<insert id="insertEquipmentLogStart"
+		parameterType="kr.or.mes2.dto.ProductionOrderDTO">
+		INSERT INTO EQUIPMENT_STATUS_LOG(LOG_ID, EQUIP_ID,
+		ORDER_ID, START_TIME)
+		VALUES(SEQ_EQUIP_LOG.NEXTVAL, #{equipId},
+		#{orderId}, SYSDATE)
+	</insert>
+
+	<update id="updateEquipmentLogEnd">
+		UPDATE EQUIPMENT_STATUS_LOG
+		SET END_TIME = SYSDATE
+		WHERE ORDER_ID = #{orderId}
+		AND END_TIME IS NULL
+	</update>
+
+	<!-- 라우팅 -->
+	<select id="getRoutingList"
+		resultType="kr.or.mes2.dto.ProductionOrderDTO">
+		SELECT
+		r.ITEM_ID AS itemId,
+		r.PROCESS_STEP AS processStep,
+		r.REMARK AS routingRemark,
+		r.IMG_PATH AS routingImgPath
+		FROM ROUTING r
+		WHERE r.ITEM_ID=#{itemId}
+		ORDER BY r.PROCESS_STEP
+	</select>
+
+	<!-- BOM -->
+	<select id="getBomChildren"
+		resultType="kr.or.mes2.dto.ProductionOrderDTO">
+		SELECT
+		b.BOM_ID AS bomId,
+		b.PARENT_ITEM AS parentItem,
+		b.CHILD_ITEM AS childItem,
+		b.REQUIRED_QTY AS requiredQty,
+		i.ITEM_NAME AS childItemName,
+		i.UNIT AS "childUnit" 
+		FROM BOM b
+		JOIN ITEM_MASTER i ON b.CHILD_ITEM = i.ITEM_ID
+		WHERE b.PARENT_ITEM = #{itemId}
+		ORDER BY b.BOM_ID
+	</select>
+
+
+</mapper>

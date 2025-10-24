@@ -1,88 +1,139 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="kr.or.mes2.mappers.RoutingMapper">
 
-	<!-- 제품 선택용 -->
-	<select id="selectItemOptions" resultType="map">
-		SELECT ITEM_ID AS itemId, ITEM_NAME AS itemName
-		FROM ITEM_MASTER
-		WHERE ITEM_TYPE_CODE IN ('SGD','PCD')
-		ORDER BY ITEM_NAME
-	</select>
+  <!-- ✅ 제품 목록 (SGD, PCD만 표시) -->
+  <select id="selectItemOptions" resultType="kr.or.mes2.dto.RoutingDTO">
+    SELECT
+      ITEM_ID AS itemId,
+      ITEM_NAME AS itemName
+    FROM ITEM_MASTER
+    WHERE ITEM_TYPE_CODE IN ('SGD', 'PCD')
+    ORDER BY ITEM_NAME
+  </select>
 
-	<!-- 설비 선택용 -->
-	<select id="selectEquipOptions" resultType="map">
-		SELECT
-		DETAIL_CODE AS equipCode,
-		DETAIL_NAME AS equipName
-		FROM CODE_DETAIL
-		WHERE CODE_ID = 'EQP'
-		AND USE_YN = 'Y'
-		ORDER BY DETAIL_CODE
-	</select>
+  <!-- ✅ 설비 목록 -->
+  <select id="selectEquipOptions" resultType="kr.or.mes2.dto.RoutingDTO">
+    SELECT
+      DETAIL_CODE AS equipDetailCode,
+      DETAIL_NAME AS equipName
+    FROM CODE_DETAIL
+    WHERE CODE_ID = 'EQP'
+      AND USE_YN = 'Y'
+    ORDER BY DETAIL_CODE
+  </select>
 
-	<!-- 공정 전체 목록 -->
-	<select id="selectRoutingList" parameterType="map"
-		resultType="kr.or.mes2.dto.RoutingDTO">
-		SELECT
-		r.ROUTING_ID AS routingId,
-		r.ITEM_ID AS itemId,
-		i.ITEM_NAME AS itemName,
-		r.PROCESS_STEP AS processStep,
-		r.EQUIP_CODE AS equipCode,
-		cd.DETAIL_NAME AS equipName,
-		r.IMG_PATH AS imgPath,
-		r.REMARK AS remark
-		FROM ROUTING r
-		JOIN ITEM_MASTER i ON r.ITEM_ID = i.ITEM_ID
-		LEFT JOIN CODE_DETAIL cd ON r.EQUIP_CODE = cd.DETAIL_CODE
-		<where>
-			<if test="itemId != null"> AND r.ITEM_ID = #{itemId} </if>
-			<if test="keyword != null and keyword != ''">
-				AND (i.ITEM_NAME LIKE '%' || #{keyword} || '%' OR cd.DETAIL_NAME LIKE
-				'%' || #{keyword} || '%')
-			</if>
-		</where>
-		ORDER BY r.ITEM_ID, r.PROCESS_STEP
-	</select>
+  <!-- ✅ 공정 리스트 -->
+  <select id="selectRoutingList" parameterType="map" resultType="kr.or.mes2.dto.RoutingDTO">
+    SELECT
+      r.ROUTING_ID AS routingId,
+      r.ITEM_ID AS itemId,
+      i.ITEM_NAME AS itemName,
+      i.ITEM_TYPE_CODE AS itemTypeCode,
+      r.PROCESS_STEP AS processStep,
+      r.EQUIP_DETAIL_CODE AS equipDetailCode,
+      cd.DETAIL_NAME AS equipName,
+      r.IMG_PATH AS imgPath,
+      r.REMARK AS remark
+    FROM ROUTING r
+      JOIN ITEM_MASTER i ON r.ITEM_ID = i.ITEM_ID
+      LEFT JOIN CODE_DETAIL cd ON r.EQUIP_DETAIL_CODE = cd.DETAIL_CODE
+    <where>
+      <if test="itemId != null">AND r.ITEM_ID = #{itemId}</if>
+      <if test="keyword != null and keyword != ''">
+        AND (i.ITEM_NAME LIKE '%' || #{keyword} || '%'
+             OR cd.DETAIL_NAME LIKE '%' || #{keyword} || '%')
+      </if>
+    </where>
+    ORDER BY r.ITEM_ID, r.PROCESS_STEP
+  </select>
 
-	<!-- 단일 조회 -->
-	<select id="findById" parameterType="int"
-		resultType="kr.or.mes2.dto.RoutingDTO">
-		SELECT ROUTING_ID AS routingId, ITEM_ID AS itemId, PROCESS_STEP AS
-		processStep,
-		EQUIP_CODE AS equipCode, IMG_PATH AS imgPath, REMARK AS remark
-		FROM ROUTING
-		WHERE ROUTING_ID = #{routingId}
-	</select>
+  <!-- ✅ 신규 ID 계산 -->
+  <select id="getNextRoutingId" resultType="int">
+    SELECT NVL(MAX(ROUTING_ID), 0) + 1 AS nextId FROM ROUTING
+  </select>
 
-	<!-- 등록 -->
-	<insert id="insertRouting"
-		parameterType="kr.or.mes2.dto.RoutingDTO">
-		INSERT INTO ROUTING (ROUTING_ID, ITEM_ID, PROCESS_STEP, EQUIP_CODE,
-		IMG_PATH, REMARK)
-		VALUES (SEQ_ROUTING.NEXTVAL, #{itemId}, #{processStep}, #{equipCode},
-		#{imgPath}, #{remark})
-	</insert>
+  <!-- ✅ 공정 등록 -->
+  <insert id="insertRouting" parameterType="kr.or.mes2.dto.RoutingDTO">
+    INSERT INTO ROUTING
+      (ROUTING_ID, ITEM_ID, PROCESS_STEP, EQUIP_DETAIL_CODE, IMG_PATH, REMARK)
+    VALUES
+      (#{routingId}, #{itemId}, #{processStep}, #{equipDetailCode}, #{imgPath}, #{remark})
+  </insert>
 
-	<!-- 수정 -->
-	<update id="updateRouting"
-		parameterType="kr.or.mes2.dto.RoutingDTO">
-		UPDATE ROUTING
-		SET ITEM_ID = #{itemId},
-		PROCESS_STEP = #{processStep},
-		EQUIP_CODE = #{equipCode},
-		IMG_PATH = #{imgPath},
-		REMARK = #{remark}
-		WHERE ROUTING_ID = #{routingId}
-	</update>
+  <!-- ✅ 공정 수정 (NULL 안전) -->
+  <update id="updateRouting" parameterType="kr.or.mes2.dto.RoutingDTO">
+    UPDATE ROUTING
+    <set>
+      <if test="itemId != null and itemId != 0">
+        ITEM_ID = #{itemId},
+      </if>
+      <if test="processStep != null">
+        PROCESS_STEP = #{processStep},
+      </if>
+      <if test="equipDetailCode != null and equipDetailCode != ''">
+        EQUIP_DETAIL_CODE = #{equipDetailCode},
+      </if>
+      <if test="imgPath != null and imgPath != ''">
+        IMG_PATH = #{imgPath},
+      </if>
+      <if test="remark != null">
+        REMARK = #{remark},
+      </if>
+    </set>
+    WHERE ROUTING_ID = #{routingId}
+  </update>
 
-	<!-- 삭제 -->
-	<delete id="deleteRouting" parameterType="int">
-		DELETE FROM ROUTING WHERE ROUTING_ID = #{routingId}
-	</delete>
+  <!-- ✅ 상세 조회 -->
+  <select id="getRoutingDetail" parameterType="int" resultType="kr.or.mes2.dto.RoutingDTO">
+    SELECT
+      r.ROUTING_ID AS routingId,
+      r.ITEM_ID AS itemId,
+      i.ITEM_NAME AS itemName,
+      i.ITEM_TYPE_CODE AS itemTypeCode,
+      r.PROCESS_STEP AS processStep,
+      r.EQUIP_DETAIL_CODE AS equipDetailCode,
+      cd.DETAIL_NAME AS equipName,
+      r.IMG_PATH AS imgPath,
+      r.REMARK AS remark
+    FROM ROUTING r
+      JOIN ITEM_MASTER i ON r.ITEM_ID = i.ITEM_ID
+      LEFT JOIN CODE_DETAIL cd ON r.EQUIP_DETAIL_CODE = cd.DETAIL_CODE
+    WHERE r.ROUTING_ID = #{routingId}
+  </select>
+
+  <!-- ✅ 공정 삭제 -->
+  <delete id="deleteRouting" parameterType="int">
+    DELETE FROM ROUTING WHERE ROUTING_ID = #{routingId}
+  </delete>
+
+  <!-- ✅ Step shift: 새 공정 삽입 시 순서 조정 -->
+  <update id="shiftRoutingStepsOnInsert" parameterType="map">
+    UPDATE ROUTING
+    SET PROCESS_STEP = PROCESS_STEP + 1
+    WHERE ITEM_ID = #{itemId}
+      AND PROCESS_STEP >= #{insertStep}
+  </update>
+
+  <!-- ✅ Step shift: 공정 삭제 시 순서 조정 -->
+  <update id="shiftRoutingStepsOnDelete" parameterType="map">
+    UPDATE ROUTING
+    SET PROCESS_STEP = PROCESS_STEP - 1
+    WHERE ITEM_ID = #{itemId}
+      AND PROCESS_STEP > #{deletedStep}
+  </update>
+
+  <!-- ✅ 남은 공정 개수 확인 -->
+  <select id="checkRemainingRoutingCount" parameterType="int" resultType="int">
+    SELECT COUNT(*) FROM ROUTING WHERE ITEM_ID = #{itemId}
+  </select>
+
+  <!-- ✅ (옵션) 순서 리셋 -->
+  <update id="resetRoutingSequence" parameterType="int">
+    UPDATE ROUTING SET PROCESS_STEP = 1 WHERE ITEM_ID = #{itemId}
+  </update>
 
 </mapper>

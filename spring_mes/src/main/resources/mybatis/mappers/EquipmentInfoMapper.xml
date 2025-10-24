@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mappers.EquipmentInfoMapper">
+
+  <!-- 🔹 다음 ID -->
+  <select id="getNextEquipId" resultType="int">
+    SELECT NVL(MAX(EQUIP_ID), 0) + 1 FROM EQUIPMENT_INFO
+  </select>
+
+  <!-- 🔹 중복 코드 체크 -->
+  <select id="checkDuplicateCode" parameterType="string" resultType="int">
+    SELECT COUNT(*) FROM EQUIPMENT_INFO WHERE EQUIP_CODE = #{equipCode}
+  </select>
+
+  <!-- 🔹 설비 목록 조회 -->
+  <select id="getEquipList" parameterType="map" resultType="kr.or.mes2.dto.EquipmentInfoDTO">
+    SELECT
+      EI.EQUIP_ID,
+      EI.EQUIP_CODE,
+      EI.EQUIP_NAME,
+      EI.STD_CAPACITY,
+      EI.ACTIVE_YN,
+      EI.MAINTENANCE_HR,
+      EI.DAILY_CAPACITY,
+      EI.DETAIL_CODE,
+      CD.DETAIL_NAME
+    FROM EQUIPMENT_INFO EI
+    LEFT JOIN CODE_DETAIL CD ON EI.DETAIL_CODE = CD.DETAIL_CODE
+    WHERE 1=1
+    <if test="keyword != null and keyword != ''">
+      AND LOWER(EI.EQUIP_NAME) LIKE '%' || LOWER(#{keyword}) || '%'
+    </if>
+    <if test="detailCode != null and detailCode != ''">
+      AND EI.DETAIL_CODE = #{detailCode}
+    </if>
+    ORDER BY EI.EQUIP_ID
+  </select>
+
+  <!-- 🔹 설비 등록 -->
+  <insert id="insertEquip" parameterType="kr.or.mes2.dto.EquipmentInfoDTO">
+    INSERT INTO EQUIPMENT_INFO (
+      EQUIP_ID, EQUIP_CODE, EQUIP_NAME, STD_CAPACITY,
+      ACTIVE_YN, MAINTENANCE_HR, DAILY_CAPACITY, DETAIL_CODE
+    ) VALUES (
+      #{equipId}, #{equipCode}, #{equipName}, #{stdCapacity},
+      #{activeYn}, #{maintenanceHr}, #{dailyCapacity}, #{detailCode}
+    )
+  </insert>
+
+  <!-- 🔹 수정 -->
+  <update id="updateEquip" parameterType="kr.or.mes2.dto.EquipmentInfoDTO">
+    UPDATE EQUIPMENT_INFO
+    SET EQUIP_CODE = #{equipCode},
+        EQUIP_NAME = #{equipName},
+        STD_CAPACITY = #{stdCapacity},
+        ACTIVE_YN = #{activeYn},
+        MAINTENANCE_HR = #{maintenanceHr},
+        DAILY_CAPACITY = #{dailyCapacity},
+        DETAIL_CODE = #{detailCode}
+    WHERE EQUIP_ID = #{equipId}
+  </update>
+
+  <!-- 🔹 삭제 -->
+  <delete id="deleteEquip" parameterType="int">
+    DELETE FROM EQUIPMENT_INFO WHERE EQUIP_ID = #{equipId}
+  </delete>
+
+  <!-- ✅ 제품군 목록 (CODE_DETAIL에서 완제품/반제품만) -->
+  <select id="getProductGroupList" resultType="kr.or.mes2.dto.EquipmentInfoDTO">
+    SELECT
+      DETAIL_CODE,
+      DETAIL_NAME
+    FROM CODE_DETAIL
+    WHERE CODE_ID IN ('PCD', 'SGD')
+      AND USE_YN = 'Y'
+    ORDER BY CODE_ID, DETAIL_CODE
+  </select>
+
+</mapper>
