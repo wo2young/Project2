@@ -1,18 +1,19 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>기준관리-BOM</title>
+<title>기준관리 - BOM</title>
 
 <%@ include file="/WEB-INF/views/includes/header.jsp" %>
 <%@ include file="/WEB-INF/views/includes/2header.jsp" %>
 
 <style>
-section.container { padding: 20px; }
+/* ========= 기본 스타일 ========= */
+section.container { padding: 20px; color: white; }
+h1 { margin-bottom: 20px; }
 
 table {
   border-collapse: collapse;
@@ -21,21 +22,24 @@ table {
 }
 th, td {
   border: 1px solid #ccc;
-  padding: 8px;
+  padding: 10px;
   text-align: center;
 }
-th { background: #f8f8f8; }
+th { background: #f5f5f5; color: black; }
 
+/* ========= 버튼 ========= */
 .btn {
-  padding: 5px 10px;
+  padding: 6px 10px;
   margin: 2px;
   cursor: pointer;
-  border: 1px solid #aaa;
-  border-radius: 4px;
-  background: #fafafa;
+  border: none;
+  border-radius: 5px;
+  background: #3B82F6;
+  color: white;
 }
-.btn:hover { background: #eaeaea; }
+.btn:hover { background: #2563EB; }
 
+/* ========= 검색 바 ========= */
 .search-bar {
   display: flex;
   align-items: center;
@@ -43,46 +47,73 @@ th { background: #f8f8f8; }
   margin-bottom: 10px;
 }
 
+/* ========= 모달 통일 스타일 (item.jsp 기준) ========= */
 .modal {
   display: none;
-  border: 1px solid #ccc;
-  background: #fafafa;
-  padding: 20px;
-  width: 520px;
   position: fixed;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  z-index: 1000;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
 }
-.modal h3 { margin-top: 0; }
+
+.modal-content {
+  background: black;
+  padding: 20px;
+  width: 450px;
+  border-radius: 10px;
+  color: white;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.modal-content select,
+.modal-content input {
+  width: 100%;
+  padding: 6px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 4px;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+  font-weight: bold;
+  color: white;
+}
 
 .unit-text {
   display: inline-block;
   padding: 6px 10px;
-  border: 1px solid #ddd;
-  background: #eee;
+  background: #333;
+  border-radius: 4px;
   min-width: 60px;
   text-align: center;
-  border-radius: 4px;
-}
-.overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.3);
-  z-index: 900;
 }
 </style>
 </head>
-<body>
 
+<body>
 <section class="container">
   <h1>BOM 관리</h1>
 
-<!-- 동현이형 이거 검색창임 -->
+  <!-- 🔍 검색 영역 -->
   <form method="get" action="">
     <div class="search-bar">
       <select name="type" style="height:30px;">
@@ -96,7 +127,7 @@ th { background: #f8f8f8; }
     </div>
   </form>
 
-<!-- 형 이건 테이블 -->
+  <!-- 📋 테이블 -->
   <table>
     <thead>
       <tr>
@@ -104,7 +135,7 @@ th { background: #f8f8f8; }
         <th>상위 제품명</th>
         <th>하위 자재명</th>
         <th>소요량</th>
-        <th>단위</th>
+        
         <th>상태</th>
         <th>생성일</th>
         <th>수정일</th>
@@ -117,10 +148,8 @@ th { background: #f8f8f8; }
           <td>${b.bomId}</td>
           <td>${b.parentItemName}</td>
           <td>${b.childItemName}</td>
-          <td>${b.requiredQty}</td>
-          <td>${b.childUnit}</td>
+          <td>${b.requiredQty} ${b.childUnit}</td>
           <td>${b.status eq 'Y' ? '활성' : '비활성'}</td>
-          <!-- 한국시간으로 저장 -->
           <td><fmt:formatDate value="${b.createdAt}" pattern="yyyy-MM-dd" timeZone="Asia/Seoul"/></td>
           <td><fmt:formatDate value="${b.updatedAt}" pattern="yyyy-MM-dd" timeZone="Asia/Seoul"/></td>
           <td>
@@ -138,86 +167,92 @@ th { background: #f8f8f8; }
   </table>
 </section>
 
-<div class="overlay" id="overlay" onclick="closeModals()"></div>
+<!-- ================= 모달 영역 ================= -->
 
-<!-- 동현이형 이거 추가 모달임 -->
+<!-- 🔵 BOM 추가 -->
 <div class="modal" id="addModal">
-  <h3>BOM 등록</h3>
-  <form id="addForm">
-    <label>상위 제품:</label><br>
-    <select name="parentItem">
-      <c:forEach var="p" items="${parentList}">
-        <option value="${p.itemId}">[${p.itemTypeCode}] ${p.itemName}</option>
-      </c:forEach>
-    </select><br><br>
+  <div class="modal-content">
+    <span class="close" onclick="closeModals()">&times;</span>
+    <h3>BOM 등록</h3>
+    <form id="addForm">
+      <label>상위 제품</label>
+      <select name="parentItem">
+        <c:forEach var="p" items="${parentList}">
+          <option value="${p.itemId}">[${p.itemTypeCode}] ${p.itemName}</option>
+        </c:forEach>
+      </select>
 
-    <label>하위 자재:</label><br>
-    <select name="childItem" id="addChildSelect" onchange="updateAddUnit()">
-      <c:forEach var="c" items="${childList}">
-        <option value="${c.itemId}" data-unit="${c.unit}">[${c.itemTypeCode}] ${c.itemName}</option>
-      </c:forEach>
-    </select><br><br>
+      <label>하위 자재</label>
+      <select name="childItem" id="addChildSelect" onchange="updateAddUnit()">
+        <c:forEach var="c" items="${childList}">
+          <option value="${c.itemId}" data-unit="${c.unit}">[${c.itemTypeCode}] ${c.itemName}</option>
+        </c:forEach>
+      </select>
 
-    <label>단위:</label><br>
-    <span id="addUnitDisplay" class="unit-text"></span><br><br>
+      <label>단위</label>
+      <span id="addUnitDisplay" class="unit-text"></span>
 
-    <label>소요량:</label><br>
-    <input type="number" name="requiredQty" step="0.01" required><br><br>
+      <label>소요량</label>
+      <input type="number" name="requiredQty" step="0.01" required>
 
-    <label>상태:</label><br>
-    <select name="status">
-      <option value="Y">활성</option>
-      <option value="N">비활성</option>
-    </select><br><br>
+      <label>상태</label>
+      <select name="status">
+        <option value="Y">활성</option>
+        <option value="N">비활성</option>
+      </select>
 
-    <button type="button" class="btn" onclick="saveAdd()">등록</button>
-    <button type="button" class="btn" onclick="closeModals()">닫기</button>
-  </form>
+      <button type="button" class="btn" style="margin-top:15px;" onclick="saveAdd()">등록</button>
+    </form>
+  </div>
 </div>
 
-<!-- 동현이형 이거 수정/삭제 모달임 -->
+<!-- 🔵 BOM 수정/삭제 -->
 <div class="modal" id="editModal">
-  <h3>BOM 수정 / 삭제</h3>
-  <form id="editForm">
-    <input type="hidden" name="bomId" id="editBomId">
+  <div class="modal-content">
+    <span class="close" onclick="closeModals()">&times;</span>
+    <h3>BOM 수정 / 삭제</h3>
+    <form id="editForm">
+      <input type="hidden" name="bomId" id="editBomId">
 
-    <label>상위 제품:</label><br>
-    <select name="parentItem" id="editParentSelect">
-      <c:forEach var="p" items="${parentList}">
-        <option value="${p.itemId}">[${p.itemTypeCode}] ${p.itemName}</option>
-      </c:forEach>
-    </select><br><br>
+      <label>상위 제품</label>
+      <select name="parentItem" id="editParentSelect">
+        <c:forEach var="p" items="${parentList}">
+          <option value="${p.itemId}">[${p.itemTypeCode}] ${p.itemName}</option>
+        </c:forEach>
+      </select>
 
-    <label>하위 자재:</label><br>
-    <select name="childItem" id="editChildSelect" onchange="updateEditUnit()">
-      <c:forEach var="c" items="${childList}">
-        <option value="${c.itemId}" data-unit="${c.unit}">[${c.itemTypeCode}] ${c.itemName}</option>
-      </c:forEach>
-    </select><br><br>
+      <label>하위 자재</label>
+      <select name="childItem" id="editChildSelect" onchange="updateEditUnit()">
+        <c:forEach var="c" items="${childList}">
+          <option value="${c.itemId}" data-unit="${c.unit}">[${c.itemTypeCode}] ${c.itemName}</option>
+        </c:forEach>
+      </select>
 
-    <label>단위:</label><br>
-    <span id="editUnitDisplay" class="unit-text"></span><br><br>
+      <label>단위</label>
+      <span id="editUnitDisplay" class="unit-text"></span>
 
-    <label>소요량:</label><br>
-    <input type="number" name="requiredQty" id="editQty" step="0.01" required><br><br>
+      <label>소요량</label>
+      <input type="number" name="requiredQty" id="editQty" step="0.01" required>
 
-    <label>상태:</label><br>
-    <select name="status" id="editStatus">
-      <option value="Y">활성</option>
-      <option value="N">비활성</option>
-    </select><br><br>
+      <label>상태</label>
+      <select name="status" id="editStatus">
+        <option value="Y">활성</option>
+        <option value="N">비활성</option>
+      </select>
 
-    <button type="button" class="btn" onclick="saveEdit()">저장</button>
-    <button type="button" class="btn" onclick="deleteEdit()">삭제</button>
-    <button type="button" class="btn" onclick="closeModals()">닫기</button>
-  </form>
+      <button type="button" class="btn" style="margin-top:10px;" onclick="saveEdit()">수정</button>
+      <button type="button" class="btn" style="background:#EF4444;margin-top:10px;" onclick="deleteEdit()">삭제</button>
+    </form>
+  </div>
 </div>
 
 <script>
-function openAddModal(){ document.getElementById("overlay").style.display="block"; document.getElementById("addModal").style.display="block"; updateAddUnit(); }
+function openAddModal(){
+  document.getElementById("addModal").style.display="flex";
+  updateAddUnit();
+}
 function openEditModal(bomId, parentItem, childItem, qty, status, unit){
-  document.getElementById("overlay").style.display="block";
-  document.getElementById("editModal").style.display="block";
+  document.getElementById("editModal").style.display="flex";
   document.getElementById("editBomId").value = bomId;
   document.getElementById("editParentSelect").value = parentItem;
 
@@ -230,10 +265,13 @@ function openEditModal(bomId, parentItem, childItem, qty, status, unit){
   document.getElementById("editUnitDisplay").textContent = unit || "";
 }
 function closeModals(){
-  document.getElementById("overlay").style.display="none";
-  document.getElementById("addModal").style.display="none";
-  document.getElementById("editModal").style.display="none";
+  document.querySelectorAll(".modal").forEach(m => m.style.display="none");
 }
+window.onclick = e => {
+  document.querySelectorAll('.modal').forEach(m=>{
+    if(e.target === m) m.style.display="none";
+  });
+};
 
 function updateAddUnit(){
   const sel = document.getElementById("addChildSelect");
@@ -263,6 +301,7 @@ function saveAdd(){
   });
 }
 
+// 🔹 수정
 function saveEdit(){
   const form = document.getElementById("editForm");
   const data = new URLSearchParams(new FormData(form)).toString();
@@ -277,6 +316,7 @@ function saveEdit(){
   });
 }
 
+// 🔹 삭제
 function deleteEdit(){
   const bomId = document.getElementById("editBomId").value;
   const childItem = document.getElementById("editChildSelect").value;

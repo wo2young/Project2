@@ -21,7 +21,6 @@
 	font-size: 14px;
 }
 
-
 .btn:hover {
 	background: #2563EB;
 }
@@ -102,7 +101,7 @@ th {
 		</form>
 		<button class="btn" id="btnAdd">제품 등록</button>
 	</div>
-	<!-- 동현이형 이게 메인디쉬~ -->
+
 	<table>
 		<thead>
 			<tr>
@@ -112,6 +111,7 @@ th {
 				<th>제품유형</th>
 				<th>상세코드</th>
 				<th>단위</th>
+				<th>규격</th>
 				<th>유통기한</th>
 				<th>작업</th>
 			</tr>
@@ -125,24 +125,26 @@ th {
 					<td>${i.itemTypeCode}</td>
 					<td>${i.detailCode}</td>
 					<td>${i.unit}</td>
+					<td>${i.specification}</td>
+				
 					<td>${i.expDate}</td>
 					<td>
 						<button class="btn btnEdit" data-id="${i.itemId}"
 							data-name="${i.itemName}" data-prefix="${i.lotPrefix}"
 							data-type="${i.itemTypeCode}" data-detail="${i.detailCode}"
-							data-unit="${i.unit}" data-exp="${i.expDate}">수정/삭제</button>
+							data-unit="${i.unit}" data-spec="${i.specification}"
+							data-exp="${i.expDate}">수정/삭제</button>
 					</td>
 				</tr>
 			</c:forEach>
 			<c:if test="${empty list}">
 				<tr>
-					<td colspan="8">등록된 제품이 없습니다.</td>
+					<td colspan="9">등록된 제품이 없습니다.</td>
 				</tr>
 			</c:if>
 		</tbody>
 	</table>
 
-	<!-- 동현이형 이게 등록 모달 -->
 	<div class="modal" id="modalAdd">
 		<div class="modal-content">
 			<span class="close" id="closeAdd">&times;</span>
@@ -164,15 +166,17 @@ th {
 				</select>
 				<p id="noCodeMsg">등록된 코드가 없습니다.</p>
 
-				<label>단위</label> <input type="text" name="unit"> <label>유통기한(일)</label>
-				<input type="number" name="expDate">
+				<label>단위</label> <input type="text" name="unit">
+
+				<label>규격 (예: 500ml / PET병)</label> <input type="text"
+					name="specification"> <label>유통기한(일)</label> <input
+					type="number" name="expDate">
 
 				<button type="submit" class="btn" style="margin-top: 15px;">등록</button>
 			</form>
 		</div>
 	</div>
 
-	<!-- 동현이형 이건 수정/삭제 모달 -->
 	<div class="modal" id="modalEdit">
 		<div class="modal-content">
 			<span class="close" id="closeEdit">&times;</span>
@@ -188,8 +192,9 @@ th {
 
 				<label>단위</label> <input type="text" name="unit" id="editUnit">
 
-				<label>유통기한(일)</label> <input type="number" name="expDate"
-					id="editExp">
+				<label>규격 (예: 500ml / PET병)</label> <input type="text"
+					name="specification" id="editSpec"> <label>유통기한(일)</label>
+				<input type="number" name="expDate" id="editExp">
 
 				<button type="submit"
 					formaction="${pageContext.request.contextPath}/master/item/update"
@@ -223,6 +228,7 @@ document.querySelectorAll(".btnEdit").forEach(btn => {
 		document.getElementById("editType").value = btn.dataset.type;
 		document.getElementById("editDetail").value = btn.dataset.detail;
 		document.getElementById("editUnit").value = btn.dataset.unit;
+		document.getElementById("editSpec").value = btn.dataset.spec; // 🔵 추가
 		document.getElementById("editExp").value = btn.dataset.exp;
 	});
 });
