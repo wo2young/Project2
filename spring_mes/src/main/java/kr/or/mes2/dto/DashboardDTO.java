@@ -10,4 +10,5 @@ public class DashboardDTO {
     private int value;         // 그래프 값 (예: 수량, 퍼센트 등)
     private int targetQty;     // 목표 수량 (PRODUCTION_TARGET)
     private int resultQty;     // 실적 수량 (PRODUCTION_RESULT)
+    private Double percent;
 }
