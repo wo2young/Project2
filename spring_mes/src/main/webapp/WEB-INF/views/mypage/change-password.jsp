@@ -68,12 +68,15 @@
         <p class="error-msg">${error}</p>
       </c:if>
 
-      <form method="post" action="${pageContext.request.contextPath}/mypage/change-password">
-        <input type="hidden" name="userId" value="${user.userId}">
-        <input type="password" name="password" placeholder="새 비밀번호" required>
-        <input type="password" name="password2" placeholder="비밀번호 확인" required>
-        <button type="submit" class="btn-primary">변경하기</button>
-      </form>
+     <form method="post"
+                action="${pageContext.request.contextPath}/password/reset">
+                <input type="hidden" name="loginId" value="${loginId}"> <input
+                    type="hidden" name="token" value="${token}"> <input
+                    type="password" name="password" placeholder="새 비밀번호" required>
+                <input type="password" name="password2" placeholder="비밀번호 확인"
+                    required>
+                <button type="submit" class="btn-primary">변경하기</button>
+            </form>
     </div>
   </div>
 

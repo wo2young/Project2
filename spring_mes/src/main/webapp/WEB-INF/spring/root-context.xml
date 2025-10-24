@@ -1,23 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xsi:schemaLocation="
-          http://www.springframework.org/schema/beans 
-          https://www.springframework.org/schema/beans/spring-beans.xsd
-          http://www.springframework.org/schema/context 
-          https://www.springframework.org/schema/context/spring-context.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+           http://www.springframework.org/schema/beans 
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context 
+           http://www.springframework.org/schema/context/spring-context.xsd">
 
-    <!-- ✅ 어노테이션 기반 설정 활성화 -->
-    <context:annotation-config />
+	<!-- ✅ 어노테이션 기반 설정 활성화 -->
+	<context:annotation-config />
 
-    <!-- ✅ MyBatis 설정 -->
-    <import resource="mybatis.xml"/>
+	<bean
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:config/api.properties</value>
+			</list>
+		</property>
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="fileEncoding" value="UTF-8" />
+	</bean>
 
-    <!-- ⚠️ 이 줄 삭제 -->
-    <!-- <bean class="kr.or.mes2.config.CryptoConfig" /> -->
+	<!-- ✅ Gmail SMTP 설정 추가 -->
+	<bean id="mailSender"
+		class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="587" />
+		<property name="username" value="your_email@gmail.com" /> <!-- 실제 Gmail 주소 -->
+		<property name="password" value="qhqh svhe ouxv nyib" /> <!-- ②에서 생성한 앱 비밀번호 -->
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.transport.protocol">smtp</prop>
+				<prop key="mail.smtp.auth">true</prop>
+				<prop key="mail.smtp.starttls.enable">true</prop>
+				<prop key="mail.debug">true</prop>
+			</props>
+		</property>
+	</bean>
 
-    <!-- ✅ 패키지 스캔 (config 포함 전체) -->
-    <context:component-scan base-package="kr.or.mes2" />
+	<context:annotation-config />
+	<import resource="mybatis.xml" />
+	<context:component-scan
+		base-package="kr.or.mes2" />
 
 </beans>

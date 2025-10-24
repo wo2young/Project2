@@ -147,15 +147,19 @@
 
   <nav class="nav-menu">
     <a href="${cxt}/dashboard">대시보드</a>
-    <a href="${cxt}/productionPlan">생산 관리</a>
+    <a href="${cxt}/target/list">생산 관리</a>
     <a href="${cxt}/order">생산 지시</a>
     <a href="${cxt}/result/new">작업 실적</a>
-    <a href="${cxt}/quality/new">품질 관리</a>
+<a href="${cxt}/quality/inspection" 
+   class="${fn:startsWith(uri, cxt.concat('/quality/inspection')) ? 'active' : ''}">
+   품질 관리
+</a>
+
     <a href="${cxt}/inventory/in/new">재고 관리</a>
-    <a href="${cxt}/board" class="${isBoard ? 'active' : ''}">게시판</a>
+   <a href="${cxt}/board/list" class="${isBoard ? 'active' : ''}">게시판</a>
     <c:if test="${user != null && roleRaw != null && roleRaw.toUpperCase() == 'ADMIN'}">
       <a href="${cxt}/master/code">기준 관리</a>
-      <a href="${cxt}/users">사용자 관리</a>
+    <a href="${cxt}/admin/approval">승인 관리</a>
     </c:if>
   </nav>
 
@@ -176,15 +180,19 @@
 
 <nav class="mobile-menu">
   <a href="${cxt}/dashboard">대시보드</a>
-  <a href="${cxt}/productionPlan">생산 관리</a>
+  <a href="${cxt}/target/list">생산 관리</a>
   <a href="${cxt}/order">생산 지시</a>
   <a href="${cxt}/result/new">작업 실적</a>
-  <a href="${cxt}/quality/new">품질 관리</a>
+<a href="${cxt}/quality/inspection" 
+   class="${fn:startsWith(uri, cxt.concat('/quality/inspection')) ? 'active' : ''}">
+   품질 관리
+</a>
+
   <a href="${cxt}/inventory/in/new">재고 관리</a>
-  <a href="${cxt}/board" class="${isBoard ? 'active' : ''}">게시판</a>
+  <a href="${cxt}/board/list" class="${isBoard ? 'active' : ''}">게시판</a>
   <c:if test="${user != null && roleRaw != null && roleRaw.toUpperCase() == 'ADMIN'}">
     <a href="${cxt}/master/code">기준 관리</a>
-    <a href="${cxt}/users">사용자 관리</a>
+    <a href="${cxt}/admin/approval">승인 관리</a>
   </c:if>
 </nav>
 
