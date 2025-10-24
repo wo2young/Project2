@@ -1,16 +1,15 @@
 package kr.or.mes2.controller;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import java.util.List;
 import java.util.UUID;
-import javax.servlet.ServletContext;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import kr.or.mes2.dto.RoutingDTO;
 import kr.or.mes2.service.RoutingService;
 
@@ -18,86 +17,111 @@ import kr.or.mes2.service.RoutingService;
 @RequestMapping("/master/routing")
 public class RoutingController {
 
-	@Autowired
-	private RoutingService service;
+    @Autowired
+    private RoutingService service;
 
-	@Autowired
-	private ServletContext ctx;
+    @GetMapping
+    public String routingMain(@RequestParam(required = false) String keyword,
+                              @RequestParam(required = false) Integer itemId,
+                              Model model) {
 
-	// 조회 + 검색
-	@GetMapping
-	public String list(@RequestParam(value="itemId", required=false) Integer itemId,
-	                   @RequestParam(value="keyword", required=false) String keyword,
-	                   Model model) {
-	    List<Map<String,Object>> equips = service.equipOptions();
+        List<RoutingDTO> list = service.list(keyword, itemId);
+        model.addAttribute("routingList", list);
+        model.addAttribute("itemOptions", service.getItemOptions());
+        model.addAttribute("equipOptions", service.getEquipOptions());
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("selectedItemId", itemId);
 
-	    model.addAttribute("equipOptions", equips);
-	    model.addAttribute("itemOptions", service.itemOptions());
-	    model.addAttribute("list", service.list(itemId, keyword));
-	    model.addAttribute("selectedItemId", itemId);
-	    model.addAttribute("keyword", keyword);
-	    System.out.println("equipOptions size = " + (equips != null ? equips.size() : -1));
-	    return "master/routing";
-	}
+        return "master/routing";
+    }
 
+    @PostMapping("/add")
+    @ResponseBody
+    public String insert(@ModelAttribute RoutingDTO dto,
+                         @RequestParam(value = "imgFile", required = false) MultipartFile imgFile) {
+        try {
+            String uploadDir = "C:/mes_3/upload/routing/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
 
+            if (imgFile != null && !imgFile.isEmpty()) {
+                String original = imgFile.getOriginalFilename();
+                String ext = original.substring(original.lastIndexOf("."));
+                String savedName = UUID.randomUUID().toString() + ext;
+                File dest = new File(uploadDir, savedName);
+                imgFile.transferTo(dest);
+                dto.setImgPath("/upload/routing/" + savedName);
+            }
 
-	// 등록
-	@PostMapping("/insert")
-	@ResponseBody
-	public String insert(@ModelAttribute RoutingDTO dto,
-			@RequestParam(value = "imgFile", required = false) MultipartFile imgFile) throws IOException {
-		dto.setImgPath(saveUpload(imgFile));
-		service.insert(dto);
-		return "success";
-	}
+            int result = service.insert(dto);
+            return result > 0 ? "success" : "fail";
 
-	// 수정
-	@PostMapping("/update")
-	@ResponseBody
-	public String update(@ModelAttribute RoutingDTO dto,
-			@RequestParam(value = "imgFile", required = false) MultipartFile imgFile) throws IOException {
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
+    }
 
-		// 새 이미지 업로드 시 교체
-		if (imgFile != null && !imgFile.isEmpty()) {
-			dto.setImgPath(saveUpload(imgFile));
-		} else {
-			// 기존 이미지 유지
-			RoutingDTO origin = service.findById(dto.getRoutingId());
-			if (origin != null && origin.getImgPath() != null) {
-				dto.setImgPath(origin.getImgPath());
-			}
-		}
+    @PostMapping("/edit")
+    @ResponseBody
+    public String update(@ModelAttribute RoutingDTO dto,
+                         @RequestParam(value = "imgFile", required = false) MultipartFile imgFile) {
+        try {
+            String uploadDir = "C:/mes_3/upload/routing/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) dir.mkdirs();
 
-		int updated = service.update(dto);
-		return updated > 0 ? "success" : "fail";
-	}
+            if (imgFile != null && !imgFile.isEmpty()) {
+                String original = imgFile.getOriginalFilename();
+                String ext = original.substring(original.lastIndexOf("."));
+                String savedName = UUID.randomUUID().toString() + ext;
+                File dest = new File(uploadDir, savedName);
+                imgFile.transferTo(dest);
 
-	// 삭제
-	@PostMapping("/delete")
-	@ResponseBody
-	public String delete(@RequestParam int routingId) {
-		service.delete(routingId);
-		return "success";
-	}
+                if (dto.getImgPath() != null && !dto.getImgPath().isEmpty()) {
+                    File oldFile = new File("C:/mes_3" + dto.getImgPath().replace("/", "\\"));
+                    if (oldFile.exists()) oldFile.delete();
+                }
 
-	// 파일 저장 유틸
-	private String saveUpload(MultipartFile file) throws IOException {
-		if (file == null || file.isEmpty())
-			return null;
-		String base = "/upload/routing";
-		String real = ctx.getRealPath(base);
-		File dir = new File(real);
-		if (!dir.exists())
-			dir.mkdirs();
+                dto.setImgPath("/upload/routing/" + savedName);
+            }
 
-		String ext = "";
-		String original = file.getOriginalFilename();
-		if (StringUtils.hasText(original) && original.contains(".")) {
-			ext = original.substring(original.lastIndexOf('.'));
-		}
-		String saved = UUID.randomUUID().toString().replaceAll("-", "") + ext;
-		file.transferTo(new File(dir, saved));
-		return base + "/" + saved;
-	}
+            int result = service.update(dto);
+            return result > 0 ? "success" : "fail";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
+    }
+
+    @PostMapping("/delete")
+    @ResponseBody
+    public String delete(@RequestParam int routingId) {
+        try {
+            RoutingDTO dto = service.getRoutingDetail(routingId);
+            int result = service.delete(routingId);
+
+            if (result > 0 && dto != null && dto.getImgPath() != null) {
+                File oldFile = new File("C:/mes_3" + dto.getImgPath().replace("/", "\\"));
+                if (oldFile.exists()) oldFile.delete();
+            }
+            return result > 0 ? "success" : "fail";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error";
+        }
+    }
+
+    @GetMapping("/detail")
+    @ResponseBody
+    public RoutingDTO getDetail(@RequestParam("routingId") int routingId) {
+        try {
+            return service.getRoutingDetail(routingId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

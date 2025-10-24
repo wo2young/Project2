@@ -78,10 +78,10 @@ public class CodeController {
 	}
 
 	@PostMapping("/detail/delete")
-	public String deleteDetail(@RequestParam String detailCode, @RequestParam String codeId, RedirectAttributes rttr) {
-		int result = service.deleteDetail(detailCode);
-		rttr.addFlashAttribute("msg", result > 0 ? "디테일 삭제 성공" : "디테일 삭제 실패");
-		return "redirect:/master/code?codeId=" + codeId;
+	public String deleteDetail(@RequestParam String detailCode, RedirectAttributes rttr) {
+	    int result = service.deleteDetail(detailCode);
+	    rttr.addFlashAttribute("msg", result > 0 ? "디테일 삭제 성공" : "디테일 삭제 실패");
+	    return "redirect:/master/code";
 	}
 
 	// ✅ 디테일 코드 참조 여부 AJAX 체크
