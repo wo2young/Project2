@@ -1,46 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
-       xmlns:mvc="http://www.springframework.org/schema/mvc"
-       xsi:schemaLocation="
-           http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
-           http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
-           http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
-           http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
+<beans:beans
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
-    <!-- DispatcherServlet Context -->
-    <mvc:annotation-driven />
+	<!-- DispatcherServlet Context -->
+	<mvc:annotation-driven />
 
-    <mvc:resources mapping="/resources/**" location="/resources/" />
+	<!-- 🖼️ 정적 리소스 매핑 -->
+	<mvc:resources mapping="/resources/**" location="/resources/" />
 
-    <!-- ✅ JSP ViewResolver -->
-    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-        <property name="prefix" value="/WEB-INF/views/" />
-        <property name="suffix" value=".jsp" />
-    </bean>
+	<!-- ✅ 실제 이미지 경로 매핑 (C:/mes_3/upload/) -->
+	<mvc:resources mapping="/upload/**" location="file:///C:/mes_3/upload/" />
+	<mvc:resources mapping="/human4/upload/**" location="file:///C:/mes_3/upload/" />
 
-    <!-- ✅ 컴포넌트 스캔 -->
-    <context:component-scan base-package="kr.or.mes2" />
+	<!-- JSP View Resolver -->
+	<beans:bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
 
-    <!-- ✅ Interceptor 등록 -->
-    <mvc:interceptors>
-        <mvc:interceptor>
-            <!-- ① 적용될 URL -->
-            <mvc:mapping path="/**" />
+	<!-- 컴포넌트 스캔 -->
+	<context:component-scan base-package="kr.or.mes2" />
 
-            <!-- ② 예외 경로 -->
-            <mvc:exclude-mapping path="/login" />
-            <mvc:exclude-mapping path="/logout" />
-            <mvc:exclude-mapping path="/mypage" />
-            <mvc:exclude-mapping path="/password/reset" />
-            <mvc:exclude-mapping path="/resources/**" />
-            <mvc:exclude-mapping path="/static/**" />
+	<!-- ✅ 인터셉터 설정 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="/login" />
+			<mvc:exclude-mapping path="/logout" />
+			<mvc:exclude-mapping path="/mypage" />
+			<mvc:exclude-mapping path="/password/reset" />
+			<mvc:exclude-mapping path="/resources/**" />
+			<mvc:exclude-mapping path="/static/**" />
+			<beans:bean class="kr.or.mes2.interceptor.ForceChangePasswordInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
 
-            <!-- ③ 실제 인터셉터 클래스 -->
-            <bean class="kr.or.mes2.interceptor.ForceChangePasswordInterceptor" />
-        </mvc:interceptor>
-    </mvc:interceptors>
-
-</beans>
+	<!-- ✅ 파일 업로드 지원 -->
+	<beans:bean id="multipartResolver"
+		class="org.springframework.web.multipart.support.StandardServletMultipartResolver" />
+</beans:beans>
