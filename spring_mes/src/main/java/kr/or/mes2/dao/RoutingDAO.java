@@ -8,37 +8,70 @@ import kr.or.mes2.dto.RoutingDTO;
 
 @Repository
 public class RoutingDAO {
+
     @Autowired
-    private SqlSession sql;
+    private SqlSession sqlSession;
 
-    public List<Map<String, Object>> itemOptions() {
-        return sql.selectList("kr.or.mes2.mappers.RoutingMapper.selectItemOptions");
-    }
+    private static final String NS = "kr.or.mes2.mappers.RoutingMapper.";
 
-    public List<Map<String, Object>> equipOptions() {
-        return sql.selectList("kr.or.mes2.mappers.RoutingMapper.selectEquipOptions");
-    }
-
-    public List<RoutingDTO> list(Integer itemId, String keyword) {
+    public List<RoutingDTO> list(String keyword, Integer itemId) {
         Map<String, Object> map = new HashMap<>();
-        map.put("itemId", itemId);
         map.put("keyword", keyword);
-        return sql.selectList("kr.or.mes2.mappers.RoutingMapper.selectRoutingList", map);
+        map.put("itemId", itemId);
+        return sqlSession.selectList(NS + "selectRoutingList", map);
     }
 
-    public RoutingDTO findById(int routingId) {
-        return sql.selectOne("kr.or.mes2.mappers.RoutingMapper.findById", routingId);
+    public List<RoutingDTO> selectItemOptions() {
+        return sqlSession.selectList(NS + "selectItemOptions");
+    }
+
+    public List<RoutingDTO> selectEquipOptions() {
+        return sqlSession.selectList(NS + "selectEquipOptions");
+    }
+
+    public int getNextId() {
+        return sqlSession.selectOne(NS + "getNextRoutingId");
     }
 
     public int insert(RoutingDTO dto) {
-        return sql.insert("kr.or.mes2.mappers.RoutingMapper.insertRouting", dto);
+        return sqlSession.insert(NS + "insertRouting", dto);
     }
 
     public int update(RoutingDTO dto) {
-        return sql.update("kr.or.mes2.mappers.RoutingMapper.updateRouting", dto);
+        return sqlSession.update(NS + "updateRouting", dto);
+    }
+
+    public RoutingDTO selectById(int routingId) {
+        return sqlSession.selectOne("kr.or.mes2.mappers.RoutingMapper.getRoutingDetail", routingId);
     }
 
     public int delete(int routingId) {
-        return sql.delete("kr.or.mes2.mappers.RoutingMapper.deleteRouting", routingId);
+        return sqlSession.delete(NS + "deleteRouting", routingId);
+    }
+
+    public void reorderOnInsert(int itemId, int insertStep) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("itemId", itemId);
+        map.put("insertStep", insertStep);
+        sqlSession.update(NS + "shiftRoutingStepsOnInsert", map);
+    }
+
+    public void reorderOnDelete(int itemId, int deletedStep) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("itemId", itemId);
+        map.put("deletedStep", deletedStep);
+        sqlSession.update(NS + "shiftRoutingStepsOnDelete", map);
+    }
+
+    public RoutingDTO getRoutingDetail(int routingId) {
+        return sqlSession.selectOne(NS + "getRoutingDetail", routingId);
+    }
+
+    public int checkRemainingCount(int itemId) {
+        return sqlSession.selectOne(NS + "checkRemainingRoutingCount", itemId);
+    }
+
+    public void resetRoutingSequence(int itemId) {
+        sqlSession.update(NS + "resetRoutingSequence", itemId);
     }
 }
