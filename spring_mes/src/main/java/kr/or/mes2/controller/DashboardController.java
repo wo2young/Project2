@@ -6,6 +6,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import kr.or.mes2.dto.DashboardDTO;
 import kr.or.mes2.service.DashboardService;
+import java.util.List;
 
 @Controller
 public class DashboardController {
@@ -16,9 +17,22 @@ public class DashboardController {
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         try {
-            DashboardDTO summary = service.getTodaySummary();
+            // ✅  이번달 목표 vs 실적 추가
+            List<DashboardDTO> targetVsActual = service.selectTargetVsActualMonth();
+            model.addAttribute("targetVsActual", targetVsActual);
 
-            // summary가 null일 경우 대비
+            // (로그 확인용)
+            System.out.println("=== targetVsActual ===");
+            if (targetVsActual != null) {
+                for (DashboardDTO d : targetVsActual) {
+                    System.out.println(d.getLabel() + " / " + d.getPercent());
+                }
+            } else {
+                System.out.println("targetVsActual is NULL");
+            }
+
+            // ✅  상단 요약
+            DashboardDTO summary = service.getTodaySummary();
             if (summary == null) {
                 summary = new DashboardDTO();
                 summary.setGoodQty(0);
@@ -33,8 +47,8 @@ public class DashboardController {
             model.addAttribute("summary", summary);
             model.addAttribute("defectRate", defectRate);
 
+            // ✅  다른 그래프 데이터
             model.addAttribute("weeklyProd", service.getWeeklyProduction());
-            model.addAttribute("monthPerf", service.getItemPerformance());
             model.addAttribute("defSummary", service.getDefectSummary());
             model.addAttribute("inventoryList", service.getInventorySummary());
             model.addAttribute("equipOEE", service.getEquipmentOEE());
@@ -44,6 +58,7 @@ public class DashboardController {
             e.printStackTrace();
             model.addAttribute("dashError", e.getMessage());
         }
+
         return "dashboard";
     }
 }
