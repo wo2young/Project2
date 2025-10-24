@@ -14,38 +14,42 @@ public class DashboardService {
     @Autowired
     private DashboardDAO dao;
 
-    // 1️⃣ 오늘 요약
+    //  오늘 요약
     public DashboardDTO getTodaySummary() {
         return dao.selectTodaySummary();
     }
 
-    // 2️⃣ 최근 7일 생산량
+    //  최근 7일 생산량
     public List<DashboardDTO> getWeeklyProduction() {
         return dao.selectProdLast7();
     }
 
-    // 3️⃣ 이번달 목표 vs 실적
+    //  이번달 목표 vs 실적
     public List<DashboardDTO> getItemPerformance() {
         return dao.selectTargetVsActualMonth();
     }
 
-    // 4️⃣ 불량 현황
+    //  불량 현황
     public List<DashboardDTO> getDefectSummary() {
         return dao.selectDefectPieMonth();
     }
 
-    // 5️⃣ 재고 현황
+    //  재고 현황
     public List<DashboardDTO> getInventorySummary() {
         return dao.selectInventoryStatus();
     }
 
-    // 6️⃣ 설비별 가동률
+    //  설비별 가동률
     public List<DashboardDTO> getEquipmentOEE() {
         return dao.selectEquipmentOEE();
     }
 
-    // 7️⃣ 승인 요청 상태
+    //  승인 요청 상태
     public List<DashboardDTO> getApprovalStatus() {
         return dao.selectApprovalStatus();
+    }
+    
+    public List<DashboardDTO> selectTargetVsActualMonth() {
+        return dao.selectTargetVsActualMonth();
     }
 }

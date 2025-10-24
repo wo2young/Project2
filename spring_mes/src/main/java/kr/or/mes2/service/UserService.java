@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import kr.or.mes2.dao.UserDAO;
 import kr.or.mes2.dto.UserDTO;
-import kr.or.mes2.util.CryptoUtil;
-import kr.or.mes2.util.MailUtil;
+import kr.or.mes2.util.CryptoUtil;   // ✅ AES 암복호화 유틸
+import kr.or.mes2.service.GmailService; // ✅ Gmail API 메일 전송 유틸
 
 @Service
 public class UserService {
@@ -22,22 +22,20 @@ public class UserService {
     private BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
-    private MailUtil mailUtil;
+    private CryptoUtil cryptoUtil;   // ✅ 암복호화
 
     @Autowired
-    private CryptoUtil cryptoUtil;
+    private GmailService gmailService;  // ✅ 이메일 발송 (Gmail API)
 
     /* ============================================================
        조회 관련
        ============================================================ */
-
     public int count(String q) {
         return dao.count(q);
     }
 
     public List<UserDTO> list(String q, int p, int size) {
         List<UserDTO> list = dao.list(q, p, size);
-        // 복호화 적용 (목록용은 최소한의 필드만)
         for (UserDTO u : list) {
             u.setEmail(cryptoUtil.decrypt(u.getEmail()));
             u.setPhone(cryptoUtil.decrypt(u.getPhone()));
@@ -60,28 +58,21 @@ public class UserService {
     /* ============================================================
        등록 및 기본정보 수정
        ============================================================ */
-
-    // 신규 사용자 등록
     public void insert(UserDTO dto) {
         String hashed = passwordEncoder.encode(dto.getPassword());
         dto.setPassword(hashed);
-
-        encryptFields(dto); // 개인정보 암호화
-
+        encryptFields(dto);
         dao.insert(dto);
     }
 
-    // 기본 정보 수정 (마이페이지용)
     public boolean updateMyInfo(UserDTO dto) {
         encryptFields(dto);
-        boolean ok = dao.updateMyInfo(dto);
-        return ok;
+        return dao.updateMyInfo(dto);
     }
 
     /* ============================================================
        유효성 검사
        ============================================================ */
-
     public String validateNewUser(UserDTO dto) {
         if (dto.getLoginId() == null || dto.getLoginId().trim().isEmpty())
             return "로그인 ID는 필수입니다.";
@@ -91,26 +82,39 @@ public class UserService {
             return "이미 존재하는 로그인 ID입니다.";
         return null;
     }
-    
-    
 
     /* ============================================================
        비밀번호 리셋 관련
        ============================================================ */
-
     public String issueResetToken(int userId) {
         String token = UUID.randomUUID().toString().substring(0, 8);
         boolean ok = dao.updateResetToken(userId, token);
+
         if (ok) {
             UserDTO user = dao.find(userId);
-            decryptFields(user); // 이메일 복호화
+            decryptFields(user);  // 이메일 복호화
+
             if (user.getEmail() != null && !user.getEmail().isEmpty()) {
-                String subject = "[MES 시스템] 비밀번호 재설정 코드 안내";
-                String body = "안녕하세요, " + user.getName() + "님.\n\n"
-                        + "비밀번호 재설정 코드: " + token + "\n"
-                        + "본 코드는 1시간 동안만 유효합니다.\n\n"
-                        + "감사합니다.";
-                mailUtil.sendMail(user.getEmail(), subject, body);
+            	String subject = "[MES 시스템] 비밀번호 재설정 안내";
+
+            	String resetLink = "http://localhost:8080/mes2/password/reset?loginId=" 
+            	        + user.getLoginId() + "&token=" + token;
+
+            	String body = ""
+            	    + "안녕하세요, " + user.getName() + "님.\n\n"
+            	    + "아래 리셋코드를 입력하거나, 링크를 클릭하여 비밀번호를 재설정하세요.\n\n"
+            	    + "리셋코드: " + token + "\n\n"
+            	    + "재설정 링크: " + resetLink + "\n\n"
+            	    + "※ 본 코드는 1시간 동안만 유효합니다.\n"
+            	    + "※ 이 요청을 직접 하지 않으셨다면 본 메일을 무시해주세요.\n\n"
+            	    + "감사합니다.\nMES 시스템 드림.";
+
+                try {
+                    gmailService.sendEmail(user.getEmail(), subject, body);
+                    System.out.println("[Gmail 발송 성공] → " + user.getEmail());
+                } catch (Exception e) {
+                    System.err.println("[메일 전송 실패] " + e.getMessage());
+                }
             }
             return token;
         }
@@ -131,7 +135,6 @@ public class UserService {
     /* ============================================================
        비밀번호 변경 (마이페이지)
        ============================================================ */
-
     public boolean changePassword(int userId, String newPlainPw) {
         String hashed = passwordEncoder.encode(newPlainPw);
         dao.updatePassword(userId, hashed);
@@ -142,10 +145,10 @@ public class UserService {
     /* ============================================================
        로그인 처리
        ============================================================ */
-
     public UserDTO login(String loginId, String rawPassword) {
         UserDTO user = dao.findByLoginId(loginId);
-        if (user == null) return null;
+        if (user == null)
+            return null;
 
         if (passwordEncoder.matches(rawPassword, user.getPassword())) {
             decryptFields(user);
@@ -164,7 +167,6 @@ public class UserService {
     /* ============================================================
        암호화/복호화 헬퍼 메서드
        ============================================================ */
-
     private void encryptFields(UserDTO dto) {
         if (dto == null) return;
         dto.setEmail(cryptoUtil.encrypt(dto.getEmail()));
