@@ -13,14 +13,32 @@
   <typeAliases>
     <typeAlias type="kr.or.mes2.dto.DashboardDTO" alias="DashboardDTO"/>
     <typeAlias type="kr.or.mes2.dto.UserDTO" alias="UserDTO"/>
+    <typeAlias type="kr.or.mes2.dto.BoardPostDTO" alias="BoardPostDTO"/>
+    <typeAlias type="kr.or.mes2.dto.BoardCategoryDTO" alias="BoardCategoryDTO"/>
+    <typeAlias type="kr.or.mes2.dto.BoardAttachmentDTO" alias="BoardAttachmentDTO"/>
+    <typeAlias type="kr.or.mes2.dto.BoardCommentDTO" alias="BoardCommentDTO"/>
     <typeAlias type="kr.or.mes2.dto.TargetDTO" alias="TargetDTO"/>
+	<typeAlias type="kr.or.mes2.dto.QualityInspectionDTO" alias="QualityInspectionDTO"/>
+	<typeAlias type="kr.or.mes2.dto.QualityDefectDTO" alias="QualityDefectDTO"/>
+	<typeAlias type="kr.or.mes2.dto.CodeDTO" alias="CodeDTO"/>
+	<typeAlias type="kr.or.mes2.dto.ItemMasterDTO" alias="ItemMasterDTO"/>
+	<typeAlias type="kr.or.mes2.dto.BomDTO" alias="BomDTO"/>
+	<typeAlias type="kr.or.mes2.dto.QualityDefectStatisticsDTO" alias="QualityDefectStatisticsDTO"/>
+	<typeAlias type="kr.or.mes2.dto.ApprovalDTO" alias="ApprovalDTO"/>
   </typeAliases>
 
   <mappers>
+  	<mapper resource="mybatis/mappers/CodeMapper.xml"/>
+	<mapper resource="mybatis/mappers/ItemMasterMapper.xml"/>
+	<mapper resource="mybatis/mappers/BomMapper.xml"/>
     <mapper resource="mybatis/mappers/DashboardMapper.xml"/>
     <mapper resource="mybatis/mappers/UserMapper.xml"/>
+    <mapper resource="mybatis/mappers/BoardMapper.xml"/>
     <mapper resource="mybatis/mappers/TargetMapper.xml"/>
-    
+	<mapper resource="mybatis/mappers/QualityInspectionMapper.xml"/>
+	<mapper resource="mybatis/mappers/QualityDefectMapper.xml"/>
+	<mapper resource="mybatis/mappers/QualityDefectStatistics.xml"/>
+	<mapper resource="mybatis/mappers/ApprovalMapper.xml"/>
   </mappers>
 
 </configuration>
