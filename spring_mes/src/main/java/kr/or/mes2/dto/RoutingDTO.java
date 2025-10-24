@@ -4,13 +4,15 @@ import lombok.Data;
 
 @Data
 public class RoutingDTO {
-    private int routingId;     // ROUTING_ID
-    private int itemId;        // ITEM_ID
-    private int processStep;   // PROCESS_STEP
-    private String equipCode;  // EQUIP_CODE
-    private String imgPath;    // IMG_PATH
-    private String remark;     // REMARK
 
-    private String itemName;
+    private int routingId;          
+    private int itemId;             
+    private int processStep;       
+    private String equipDetailCode; 
+    private String imgPath;       
+    private String remark;          
+
+    private String itemName;       
+    private String itemTypeCode;    
     private String equipName;
 }

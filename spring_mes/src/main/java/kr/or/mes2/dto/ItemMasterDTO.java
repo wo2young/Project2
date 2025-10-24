@@ -12,7 +12,7 @@ public class ItemMasterDTO {
     private String itemTypeCode;    // ITEM_TYPE_CODE: 마스터 코드 (PCD / SGD / RMD)
     private String detailCode;      // ITEM_DETAIL_CODE: 세부 코드 (CODE_DETAIL.DETAIL_CODE)
     private String unit;            // UNIT: 단위 (EA, L, KG 등)
-    private String itemSpec;        // SPECIFICATION: 제품의 기준정보
+    private String specification;        // SPECIFICATION: 제품의 기준정보
     private int expDate;            // EXPIRY_DAYS: 유통기한(일 기준)
 
     // 조회용 (조인 결과용)
