@@ -22,6 +22,23 @@
 		<property name="fileEncoding" value="UTF-8" />
 	</bean>
 
+	<!-- ✅ Gmail SMTP 설정 추가 -->
+	<bean id="mailSender"
+		class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="587" />
+		<property name="username" value="your_email@gmail.com" /> <!-- 실제 Gmail 주소 -->
+		<property name="password" value="qhqh svhe ouxv nyib" /> <!-- ②에서 생성한 앱 비밀번호 -->
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.transport.protocol">smtp</prop>
+				<prop key="mail.smtp.auth">true</prop>
+				<prop key="mail.smtp.starttls.enable">true</prop>
+				<prop key="mail.debug">true</prop>
+			</props>
+		</property>
+	</bean>
+
 	<context:annotation-config />
 	<import resource="mybatis.xml" />
 	<context:component-scan
