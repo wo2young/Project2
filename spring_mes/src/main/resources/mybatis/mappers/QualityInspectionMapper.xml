@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mappers.QualityInspectionMapper">
+
+  <!-- ✅ [1] 검사 대상 목록 조회 -->
+  <!-- STATUS='CONFIRMED' → 검사 전 항목만 표시 -->
+ <select id="getInventoryList" resultType="kr.or.mes2.dto.QualityInspectionDTO">
+  SELECT 
+      INV.TXN_ID             AS txnId,
+      INV.ITEM_ID            AS itemId,
+      INV.QTY                AS quantity,
+      INV.STATUS             AS status,
+      TO_CHAR(INV.TXN_DATE, 'YYYY-MM-DD HH24:MI:SS') AS txnDate,
+      IM.ITEM_NAME           AS itemName,
+      IM.ITEM_TYPE_CODE      AS itemTypeCode   <!-- ✅ 품목상태 기준 컬럼 -->
+  FROM INVENTORY_TRANSACTION INV
+       JOIN ITEM_MASTER IM ON INV.ITEM_ID = IM.ITEM_ID
+  WHERE INV.STATUS = 'CONFIRMED'              <!-- ✅ 검사 전 상태만 -->
+    AND IM.ITEM_TYPE_CODE != 'RMD'            <!-- 🚫 원자재 제외 -->
+  ORDER BY INV.TXN_ID DESC
+</select>
+
+
+  <!-- ✅ [2] 등록된 품질검사 목록 (검사 완료 항목 포함) -->
+  <select id="getInspectionList" resultType="kr.or.mes2.dto.QualityInspectionDTO">
+    SELECT
+        INS.INSPECTION_ID      AS inspectionId,
+        INS.TXN_ID             AS txnId,
+        INS.INSPECTOR_ID       AS inspectorId,
+        INS.INSPECT_TYPE       AS inspectType,
+        INS.DEFECT_QTY         AS defectQty,
+        INS.INSPECTION_RESULT  AS inspectionResult,
+        INS.REMARKS            AS remarks,
+        TO_CHAR(INS.CREATED_AT, 'YYYY-MM-DD HH24:MI:SS') AS createdAt,
+        INV.ITEM_ID            AS itemId,
+        INV.QTY                AS quantity,
+        INV.STATUS             AS status,
+        TO_CHAR(INV.TXN_DATE, 'YYYY-MM-DD HH24:MI:SS') AS txnDate,
+        IM.ITEM_NAME           AS itemName,
+        IM.ITEM_TYPE_CODE      AS itemTypeCode   <!-- ✅ 품목상태 기준 컬럼 -->
+    FROM QUALITY_INSPECTION INS
+         JOIN INVENTORY_TRANSACTION INV ON INS.TXN_ID = INV.TXN_ID
+         JOIN ITEM_MASTER IM ON INV.ITEM_ID = IM.ITEM_ID
+    ORDER BY INS.INSPECTION_ID DESC
+  </select>
+
+
+  <!-- ✅ [3] 품질검사 등록 -->
+  <insert id="insertInspection" parameterType="kr.or.mes2.dto.QualityInspectionDTO">
+  INSERT INTO QUALITY_INSPECTION (
+    INSPECTION_ID,
+    TXN_ID,
+    INSPECTOR_ID,
+    INSPECT_TYPE,
+    DEFECT_QTY,
+    INSPECTION_RESULT,
+    REMARKS,
+    CREATED_AT
+) VALUES (
+    #{inspectionId},
+    #{txnId},
+    #{inspectorId},
+    #{inspectType},
+    #{defectQty},
+    #{inspectionResult},
+    #{remarks},
+    SYSDATE + (9/24)
+)
+
+
+  </insert>
+
+
+  <!-- ✅ [4] 시퀀스 대체용 ID 생성 (MAX + 1 방식) -->
+  <select id="getNextInspectionId" resultType="int">
+    SELECT NVL(MAX(INSPECTION_ID), 0) + 1 FROM QUALITY_INSPECTION
+  </select>
+
+
+  <!-- ✅ [5] TXN_ID 기준 ITEM_TYPE_CODE 조회 (검사유형 자동기입용) -->
+  <select id="getItemTypeCodeByTxn" parameterType="int" resultType="string">
+    SELECT IM.ITEM_TYPE_CODE
+    FROM INVENTORY_TRANSACTION INV
+         JOIN ITEM_MASTER IM ON INV.ITEM_ID = IM.ITEM_ID
+    WHERE INV.TXN_ID = #{txnId}
+  </select>
+  
+  
+<!-- ✅ [6] 검사 등록 시 INVENTORY 상태를 'ING'로 변경 -->
+<update id="updateStatusToING" parameterType="int">
+  UPDATE INVENTORY_TRANSACTION
+  SET STATUS = 'ING'
+  WHERE TXN_ID = #{txnId}
+</update>
+
+  
+
+</mapper>
