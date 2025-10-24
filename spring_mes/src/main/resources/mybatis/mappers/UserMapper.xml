@@ -9,42 +9,45 @@
 	<select id="findByLoginId" parameterType="string"
 		resultType="kr.or.mes2.dto.UserDTO">
 		SELECT
-			USER_ID,
-			LOGIN_ID,
-			PASSWORD,
-			NAME,
-			EMAIL,
-			PHONE,
-			BIRTHDATE,
-			ZIPCODE,
-			ADDRESS,
-			ADDRESS_DETAIL,
-			ROLE,
-			CREATED_AT,
-			UPDATED_AT,
-			RESET_TOKEN,
-			TOKEN_EXPIRE_AT
+		USER_ID,
+		LOGIN_ID,
+		PASSWORD,
+		NAME,
+		EMAIL,
+		PHONE,
+		BIRTHDATE,
+		ZIPCODE,
+		ADDRESS,
+		ADDRESS_DETAIL,
+		ROLE,
+		CREATED_AT + INTERVAL
+		'9' HOUR AS CREATED_AT,
+		UPDATED_AT + INTERVAL '9' HOUR AS UPDATED_AT,
+		RESET_TOKEN,
+		TOKEN_EXPIRE_AT + INTERVAL '9' HOUR AS TOKEN_EXPIRE_AT
 		FROM USER_T
-		WHERE UPPER(LOGIN_ID) = UPPER(#{loginId})
+		WHERE
+		UPPER(LOGIN_ID) = UPPER(#{loginId})
 	</select>
 
 	<!-- 마이페이지용 조회 -->
 	<select id="findById" parameterType="int"
 		resultType="kr.or.mes2.dto.UserDTO">
 		SELECT
-			USER_ID,
-			LOGIN_ID,
-			NAME,
-			EMAIL,
-			PHONE,
-			BIRTHDATE,
-			ZIPCODE,
-			ADDRESS,
-			ADDRESS_DETAIL,
-			ROLE,
-			PASSWORD,
-			CREATED_AT,
-			UPDATED_AT
+		USER_ID,
+		LOGIN_ID,
+		NAME,
+		EMAIL,
+		PHONE,
+		BIRTHDATE,
+		ZIPCODE,
+		ADDRESS,
+		ADDRESS_DETAIL,
+		ROLE,
+		PASSWORD,
+		CREATED_AT + INTERVAL '9' HOUR AS
+		CREATED_AT,
+		UPDATED_AT + INTERVAL '9' HOUR AS UPDATED_AT
 		FROM USER_T
 		WHERE USER_ID = #{userId}
 	</select>
@@ -53,28 +56,30 @@
 	<select id="list" resultType="kr.or.mes2.dto.UserDTO">
 		SELECT *
 		FROM (
-			SELECT ROWNUM AS rn, U.*
-			FROM (
-				SELECT
-					USER_ID,
-					LOGIN_ID,
-					NAME,
-					EMAIL,
-					PHONE,
-					ROLE,
-					CREATED_AT
-				FROM USER_T
-				<where>
-					<if test="q != null and q != ''">
-						(LOWER(NAME) LIKE LOWER('%' || #{q} || '%')
-						OR LOWER(LOGIN_ID) LIKE LOWER('%' || #{q} || '%'))
-					</if>
-				</where>
-				ORDER BY USER_ID DESC
-			) U
+		SELECT ROWNUM AS rn, U.*
+		FROM (
+		SELECT
+		USER_ID,
+		LOGIN_ID,
+		NAME,
+		EMAIL,
+		PHONE,
+		ROLE,
+		CREATED_AT + INTERVAL '9' HOUR AS CREATED_AT
+		FROM USER_T
+		<where>
+			<if test="q != null and q != ''">
+				(LOWER(NAME) LIKE LOWER('%' || #{q} || '%')
+				OR
+				LOWER(LOGIN_ID) LIKE LOWER('%' || #{q} || '%'))
+			</if>
+		</where>
+		ORDER BY USER_ID DESC
+		) U
 		)
 		WHERE rn BETWEEN ((#{p}-1) * #{size} + 1)
-		AND (#{p} * #{size})
+		AND
+		(#{p} * #{size})
 	</select>
 
 	<!-- 사용자 총 개수 -->
@@ -83,7 +88,8 @@
 		FROM USER_T
 		<where>
 			<if test="_parameter != null and _parameter != ''">
-				AND (LOWER(LOGIN_ID) LIKE LOWER('%' || #{_parameter} || '%')
+				AND (LOWER(LOGIN_ID) LIKE LOWER('%' || #{_parameter} ||
+				'%')
 				OR LOWER(NAME) LIKE LOWER('%' || #{_parameter} || '%'))
 			</if>
 		</where>
@@ -93,37 +99,22 @@
 	<select id="find" parameterType="int"
 		resultType="kr.or.mes2.dto.UserDTO">
 		SELECT
-			USER_ID,
-			LOGIN_ID,
-			NAME,
-			EMAIL,
-			PHONE,
-			BIRTHDATE,
-			ZIPCODE,
-			ADDRESS,
-			ADDRESS_DETAIL,
-			ROLE,
-			PASSWORD,
-			CREATED_AT,
-			UPDATED_AT
+		USER_ID,
+		LOGIN_ID,
+		NAME,
+		EMAIL,
+		PHONE,
+		BIRTHDATE,
+		ZIPCODE,
+		ADDRESS,
+		ADDRESS_DETAIL,
+		ROLE,
+		PASSWORD,
+		CREATED_AT + INTERVAL '9' HOUR AS
+		CREATED_AT,
+		UPDATED_AT + INTERVAL '9' HOUR AS UPDATED_AT
 		FROM USER_T
 		WHERE USER_ID = #{id}
-	</select>
-
-	<!-- 리셋 토큰으로 사용자 조회 -->
-	<select id="findByLoginIdAndToken" parameterType="map"
-		resultType="kr.or.mes2.dto.UserDTO">
-		SELECT
-			USER_ID,
-			LOGIN_ID,
-			NAME,
-			ROLE,
-			RESET_TOKEN,
-			TOKEN_EXPIRE_AT
-		FROM USER_T
-		WHERE UPPER(LOGIN_ID) = UPPER(#{loginId})
-		AND UPPER(RESET_TOKEN) = UPPER(#{token})
-		AND TOKEN_EXPIRE_AT > SYSDATE
 	</select>
 
 	<!-- 아이디 존재 여부 확인 -->
@@ -134,89 +125,112 @@
 		WHERE UPPER(LOGIN_ID) = UPPER(#{loginId})
 	</select>
 
+	<!-- 리셋 토큰 발급 (KST 기준 +9시간 보정) -->
+	<update id="updateResetToken" parameterType="map">
+		UPDATE USER_T
+		SET
+		RESET_TOKEN = #{token},
+		TOKEN_EXPIRE_AT = (SYSTIMESTAMP + INTERVAL '10'
+		HOUR),
+		UPDATED_AT = (SYSTIMESTAMP + INTERVAL '9' HOUR)
+		WHERE USER_ID =
+		#{userId}
+	</update>
+
+	<!-- 리셋 토큰으로 사용자 조회 -->
+	<select id="findByLoginIdAndToken" parameterType="map"
+		resultType="kr.or.mes2.dto.UserDTO">
+		SELECT
+		USER_ID,
+		LOGIN_ID,
+		NAME,
+		ROLE,
+		RESET_TOKEN,
+		TOKEN_EXPIRE_AT + INTERVAL '9' HOUR AS TOKEN_EXPIRE_AT
+		FROM USER_T
+		WHERE UPPER(LOGIN_ID) = UPPER(#{loginId})
+		AND UPPER(RESET_TOKEN) =
+		UPPER(#{token})
+		AND TOKEN_EXPIRE_AT
+		> (SYSTIMESTAMP - INTERVAL '9' HOUR)
+	</select>
+
+
 	<!-- 리셋 토큰으로 비밀번호 재설정 -->
 	<update id="updatePasswordWithToken" parameterType="map">
 		UPDATE USER_T
-		SET PASSWORD = #{password},
-			RESET_TOKEN = NULL,
-			TOKEN_EXPIRE_AT = NULL,
-			UPDATED_AT = SYSDATE
-		WHERE LOGIN_ID = #{loginId}
-		AND RESET_TOKEN = #{token}
-		AND TOKEN_EXPIRE_AT > SYSDATE
-	</update>
-
-	<!-- 리셋 토큰 발급 -->
-	<update id="updateResetToken" parameterType="map">
-		UPDATE USER_T
-		SET RESET_TOKEN = #{token},
-			TOKEN_EXPIRE_AT = SYSDATE + (1/24)
-		WHERE USER_ID = #{userId}
-	</update>
-
-	<!-- 비밀번호 직접 변경 (마이페이지) -->
-	<update id="updatePassword" parameterType="map">
-		UPDATE USER_T
-		SET PASSWORD = #{password},
-			UPDATED_AT = SYSDATE
-		WHERE USER_ID = #{userId}
-	</update>
-
-	<!-- 마이페이지: 개인정보 수정 -->
-	<update id="updateMyInfo" parameterType="kr.or.mes2.dto.UserDTO">
-		UPDATE USER_T
 		SET
-			EMAIL = #{email},
-			PHONE = #{phone},
-			BIRTHDATE = #{birthdate},
-			ZIPCODE = #{zipcode},
-			ADDRESS = #{address},
-			ADDRESS_DETAIL = #{addressDetail},
-			UPDATED_AT = SYSDATE
-		WHERE USER_ID = #{userId}
+		PASSWORD = #{password},
+		RESET_TOKEN = NULL,
+		TOKEN_EXPIRE_AT = NULL,
+		UPDATED_AT = (SYSTIMESTAMP + INTERVAL '9' HOUR)
+		WHERE
+		UPPER(LOGIN_ID) =
+		UPPER(#{loginId})
+		AND UPPER(RESET_TOKEN) = UPPER(#{token})
+		AND
+		TOKEN_EXPIRE_AT > SYSTIMESTAMP
 	</update>
 
 	<!-- 리셋 정보 초기화 -->
 	<update id="clearResetByUserId" parameterType="int">
 		UPDATE USER_T
-		SET RESET_TOKEN = NULL,
-			TOKEN_EXPIRE_AT = NULL
+		SET
+		RESET_TOKEN = NULL,
+		TOKEN_EXPIRE_AT = NULL,
+		UPDATED_AT = (SYSTIMESTAMP +
+		INTERVAL '9' HOUR)
 		WHERE USER_ID = #{userId}
 	</update>
 
 	<!-- 신규 사용자 등록 -->
 	<insert id="insert" parameterType="kr.or.mes2.dto.UserDTO">
-		<selectKey keyProperty="userId" order="BEFORE" resultType="int">
+		<selectKey keyProperty="userId" order="BEFORE"
+			resultType="int">
 			SELECT NVL(MAX(USER_ID), 0) + 1 FROM USER_T
 		</selectKey>
 
 		INSERT INTO USER_T (
-			USER_ID,
-			LOGIN_ID,
-			PASSWORD,
-			NAME,
-			EMAIL,
-			PHONE,
-			BIRTHDATE,
-			ZIPCODE,
-			ADDRESS,
-			ADDRESS_DETAIL,
-			ROLE,
-			CREATED_AT
+		USER_ID,
+		LOGIN_ID,
+		PASSWORD,
+		NAME,
+		EMAIL,
+		PHONE,
+		BIRTHDATE,
+		ZIPCODE,
+		ADDRESS,
+		ADDRESS_DETAIL,
+		ROLE,
+		CREATED_AT
 		) VALUES (
-			#{userId},
-			#{loginId},
-			#{password},
-			#{name},
-			#{email},
-			#{phone},
-			#{birthdate},
-			#{zipcode},
-			#{address},
-			#{addressDetail},
-			#{role},
-			SYSDATE
+		#{userId},
+		#{loginId},
+		#{password},
+		#{name},
+		#{email},
+		#{phone},
+		#{birthdate},
+		#{zipcode},
+		#{address},
+		#{addressDetail},
+		#{role},
+		(SYSTIMESTAMP + INTERVAL '9' HOUR)
 		)
 	</insert>
+
+	<!-- ✅ 사용자 정보 수정 -->
+	<update id="updateMyInfo" parameterType="kr.or.mes2.dto.UserDTO">
+		UPDATE USER_T
+		SET
+		EMAIL = #{email},
+		PHONE = #{phone},
+		BIRTHDATE = #{birthdate},
+		ZIPCODE = #{zipcode},
+		ADDRESS = #{address},
+		ADDRESS_DETAIL = #{addressDetail},
+		UPDATED_AT = SYSTIMESTAMP
+		WHERE USER_ID = #{userId}
+	</update>
 
 </mapper>
