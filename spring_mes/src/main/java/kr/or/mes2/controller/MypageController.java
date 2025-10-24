@@ -1,10 +1,15 @@
 package kr.or.mes2.controller;
 
 import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import kr.or.mes2.dto.UserDTO;
@@ -16,6 +21,9 @@ public class MypageController {
 
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder; // 이미 Bean 등록되어 있으므로 사용 가능
 
 	@GetMapping("")
 	public String mypageMain(HttpSession session, Model model) {
@@ -36,27 +44,37 @@ public class MypageController {
 	}
 
 	@PostMapping("/change-password")
-	public String changePasswordProcess(@RequestParam String password, @RequestParam String password2,
-			HttpSession session, RedirectAttributes redirectAttributes, Model model) {
+	public String changePasswordProcess(@RequestParam(required = false) String currentPassword,
+			@RequestParam String newPassword, @RequestParam String confirmPassword, HttpSession session,
+			RedirectAttributes redirectAttributes) {
 
-		// (1) 새 비밀번호 일치 확인
-		if (!password.equals(password2)) {
-			model.addAttribute("error", "비밀번호가 일치하지 않습니다.");
-			return "mypage/change-password";
-		}
-
-		// (2) 로그인 세션 확인
 		UserDTO user = (UserDTO) session.getAttribute("loginUser");
 		if (user == null)
 			return "redirect:/login";
 
-		// (3) DB 업데이트 (user_id → userId 로 변경)
-		userService.changePassword(user.getUserId(), password);
+		// (1) 새 비밀번호 확인
+		if (!newPassword.equals(confirmPassword)) {
+			redirectAttributes.addFlashAttribute("msgErr", "새 비밀번호가 일치하지 않습니다.");
+			return "redirect:/mypage";
+		}
 
-		// (4) 상태 갱신 및 메시지 전달
-		session.setAttribute("mustChangePw", false);
-		redirectAttributes.addFlashAttribute("msg", "비밀번호가 성공적으로 변경되었습니다.");
-		return "redirect:/dashboard";
+		// (2) 현재 비밀번호 확인
+		if (currentPassword != null && !currentPassword.isEmpty()) {
+			if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+				redirectAttributes.addFlashAttribute("msgErr", "현재 비밀번호가 올바르지 않습니다.");
+				return "redirect:/mypage";
+			}
+		}
+
+		// (3) BCrypt 암호화 후 DB 업데이트
+		userService.changePassword(user.getUserId(), newPassword);
+
+		// (4) 세션 갱신
+		UserDTO refreshed = userService.findByLoginId(user.getLoginId());
+		session.setAttribute("loginUser", refreshed);
+
+		redirectAttributes.addFlashAttribute("msgOk", "비밀번호가 성공적으로 변경되었습니다.");
+		return "redirect:/mypage";
 	}
 
 	@PostMapping("/update-info")
