@@ -15,6 +15,7 @@ public class QualityInspectionDTO {
     private Integer inspectionId;      // INSPECTION_ID (PK)
     private Integer inspectorId;       // INSPECTOR_ID (검사자)
     private String inspectType;        // INSPECT_TYPE (RECEIVING / IN_PROCESS / FINAL)
+    private Integer totalQty;          // ✅ TOTAL_QTY (총 수량, INVENTORY에서 자동 참조)
     private Integer defectQty;         // DEFECT_QTY (불량 수량)
     private String inspectionResult;   // INSPECTION_RESULT (OK / NG)
     private String remarks;            // REMARKS (비고)
