@@ -25,7 +25,7 @@
     ORDER BY D.CREATED_AT DESC
   </select>
 
-  <!-- ✅ 검사 완료된 인벤토리 목록 -->
+  <!-- ✅ 검사 완료된 인벤토리 목록 (OK도 포함하도록 수정) -->
   <select id="getInventoryList" resultType="QualityDefectDTO">
     SELECT 
         QI.INSPECTION_ID  AS inspectionId,
@@ -37,8 +37,7 @@
     LEFT JOIN INVENTORY_TRANSACTION T ON QI.TXN_ID = T.TXN_ID
     LEFT JOIN ITEM_MASTER I ON T.ITEM_ID = I.ITEM_ID
     WHERE 
-        QI.INSPECTION_RESULT = 'NG'
-        AND <![CDATA[
+        <![CDATA[
           NVL((SELECT SUM(D.DEFECT_QTY)
                  FROM QUALITY_DEFECT D
                 WHERE D.INSPECT_ID = QI.INSPECTION_ID

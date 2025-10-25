@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mappers.QualityDefectStatisticsMapper">
+
+  <!-- ✅ 1️⃣ 제품유형별 총수량 / 승인된 불량수량 / 불량률 -->
+  <select id="getStatisticsByType"
+          parameterType="java.lang.String"
+          resultType="kr.or.mes2.dto.QualityDefectStatisticsDTO">
+
+    SELECT
+        IM.ITEM_TYPE_CODE AS productTypeCode,
+
+        /* ✅ 총수량: APPROVED 불량이 하나라도 있는 인스펙션의 TOTAL_QTY만 집계 (중복방지) */
+        NVL(SUM(
+          CASE 
+            WHEN I.INSPECTION_ID IN (
+              SELECT DISTINCT INSPECT_ID
+              FROM QUALITY_DEFECT
+              WHERE STATUS = 'APPROVED'
+            )
+            THEN I.TOTAL_QTY
+            ELSE 0
+          END
+        ), 0) AS totalQty,
+
+        /* ✅ 승인된 불량수량 */
+        NVL(SUM(
+          CASE 
+            WHEN D.STATUS = 'APPROVED' THEN D.DEFECT_QTY
+            ELSE 0
+          END
+        ), 0) AS defectQty,
+
+        /* ✅ 불량률 (%) */
+        ROUND(
+          CASE 
+            WHEN NVL(SUM(
+              CASE 
+                WHEN I.INSPECTION_ID IN (
+                  SELECT DISTINCT INSPECT_ID
+                  FROM QUALITY_DEFECT
+                  WHERE STATUS = 'APPROVED'
+                )
+                THEN I.TOTAL_QTY
+                ELSE 0
+              END
+            ), 0) = 0 THEN 0
+            ELSE 
+              NVL(SUM(
+                CASE WHEN D.STATUS = 'APPROVED' THEN D.DEFECT_QTY ELSE 0 END
+              ), 0)
+              /
+              NVL(SUM(
+                CASE 
+                  WHEN I.INSPECTION_ID IN (
+                    SELECT DISTINCT INSPECT_ID
+                    FROM QUALITY_DEFECT
+                    WHERE STATUS = 'APPROVED'
+                  )
+                  THEN I.TOTAL_QTY
+                  ELSE 0
+                END
+              ), 1) * 100
+          END, 2
+        ) AS defectRate
+
+    FROM QUALITY_DEFECT D
+      JOIN QUALITY_INSPECTION I ON D.INSPECT_ID = I.INSPECTION_ID
+      JOIN INVENTORY_TRANSACTION INV ON I.TXN_ID = INV.TXN_ID
+      JOIN ITEM_MASTER IM ON INV.ITEM_ID = IM.ITEM_ID
+
+    WHERE IM.ITEM_TYPE_CODE = #{type}
+    GROUP BY IM.ITEM_TYPE_CODE
+
+  </select>
+
+
+  
+<!-- ✅ 불량유형별 승인된 불량수량 (CODE_DETAIL에서 DEF 이름 참조) -->
+<select id="getDefectNameStatsByItemType"
+        parameterType="java.lang.String"
+        resultType="map">
+
+  SELECT 
+      C.DEFECT_TYPE AS defectTypeName,               -- ✅ 불량유형명
+      NVL(SUM(QD.DEFECT_QTY), 0) AS defectQty        -- ✅ 승인된 불량수량 (없으면 0)
+  FROM (
+      SELECT '용기불량' AS DEFECT_TYPE FROM DUAL UNION ALL
+      SELECT '기타불량' FROM DUAL UNION ALL
+      SELECT '파손' FROM DUAL UNION ALL
+      SELECT '혼합불량' FROM DUAL
+  ) C
+  LEFT JOIN QUALITY_DEFECT QD 
+    ON QD.DEFECT_TYPE = C.DEFECT_TYPE
+    AND QD.STATUS = 'APPROVED'
+  LEFT JOIN QUALITY_INSPECTION QI 
+    ON QD.INSPECT_ID = QI.INSPECTION_ID
+  LEFT JOIN INVENTORY_TRANSACTION INV 
+    ON QI.TXN_ID = INV.TXN_ID
+  LEFT JOIN ITEM_MASTER IM 
+    ON INV.ITEM_ID = IM.ITEM_ID
+  WHERE IM.ITEM_TYPE_CODE = 'PCD'                   -- ✅ 완제품만
+     OR IM.ITEM_TYPE_CODE IS NULL                   -- ✅ (LEFT JOIN으로 빠지는 경우 포함)
+  GROUP BY C.DEFECT_TYPE
+  ORDER BY defectQty DESC
+
+</select>
+
+
+
+</mapper>
