@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mapper.ApprovalMapper">
+
+  <!-- 승인 대기 목록 -->
+  <select id="selectPendingApprovals" resultType="kr.or.mes2.dto.ApprovalDTO">
+    SELECT 
+      a.REQUEST_ID AS requestId,
+      a.DEFECT_ID AS defectId,
+      a.REQUEST_USER AS requestUser,
+      a.STATUS AS status,
+      a.REMARK AS remark,
+      d.DEFECT_TYPE AS defectType,
+      d.DEFECT_QTY AS defectQty,
+      d.DEFECT_REASON AS defectReason,
+      a.CREATED_AT AS createdAt
+    FROM APPROVAL_REQUEST a
+    JOIN QUALITY_DEFECT d ON a.DEFECT_ID = d.DEFECT_ID
+    WHERE a.STATUS = 'PENDING'
+    ORDER BY a.CREATED_AT DESC
+  </select>
+
+  <!-- 승인 처리 -->
+  <update id="approveRequest">
+    UPDATE APPROVAL_REQUEST
+    SET STATUS = 'APPROVED',
+        APPROVER_ID = #{approverId},
+        UPDATED_AT = SYSDATE,
+        REMARK = #{remark}
+    WHERE REQUEST_ID = #{requestId}
+  </update>
+
+  <!-- 반려 처리 -->
+  <update id="rejectRequest">
+    UPDATE APPROVAL_REQUEST
+    SET STATUS = 'REJECTED',
+        APPROVER_ID = #{approverId},
+        UPDATED_AT = SYSDATE,
+        REMARK = #{remark}
+    WHERE REQUEST_ID = #{requestId}
+  </update>
+
+</mapper>

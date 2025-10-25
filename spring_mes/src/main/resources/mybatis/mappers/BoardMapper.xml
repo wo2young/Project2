@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.mes2.mapper.BoardMapper">
+
+  <!-- 게시글 ID 시퀀스 -->
+  <select id="getNextPostId" resultType="int">
+    SELECT NVL(MAX(POST_ID), 0) + 1 FROM BOARD_POST
+  </select>
+
+  <!-- 게시글 목록 -->
+  <select id="getPostList" resultType="BoardPostDTO">
+    SELECT POST_ID, CATEGORY_ID, TITLE, WRITER_ID, VIEW_COUNT,
+           CREATED_AT, NOTICE_YN
+    FROM BOARD_POST
+    WHERE DELETE_YN = 'N'
+    ORDER BY NOTICE_YN DESC, CREATED_AT DESC
+  </select>
+
+  <!-- 게시글 상세 -->
+  <select id="getPostDetail" parameterType="int" resultType="BoardPostDTO">
+    SELECT POST_ID, CATEGORY_ID, TITLE, CONTENT, WRITER_ID,
+           VIEW_COUNT, CREATED_AT, UPDATED_AT, NOTICE_YN
+    FROM BOARD_POST
+    WHERE POST_ID = #{postId}
+      AND DELETE_YN = 'N'
+  </select>
+
+  <!-- 게시글 등록 -->
+  <insert id="insertPost" parameterType="BoardPostDTO">
+    INSERT INTO BOARD_POST (
+      POST_ID, CATEGORY_ID, TITLE, CONTENT, WRITER_ID, NOTICE_YN, DELETE_YN
+    ) VALUES (
+      #{postId}, #{categoryId}, #{title}, #{content}, #{writerId}, 'N', 'N'
+    )
+  </insert>
+
+  <!-- 게시글 수정 -->
+  <update id="updatePost" parameterType="BoardPostDTO">
+    UPDATE BOARD_POST
+    SET TITLE = #{title},
+        CONTENT = #{content},
+        UPDATED_AT = SYSDATE
+    WHERE POST_ID = #{postId}
+      AND DELETE_YN = 'N'
+  </update>
+
+  <!-- 게시글 삭제 (소프트 삭제) -->
+  <update id="deletePost" parameterType="int">
+    UPDATE BOARD_POST
+    SET DELETE_YN = 'Y',
+        UPDATED_AT = SYSDATE
+    WHERE POST_ID = #{postId}
+      AND DELETE_YN = 'N'
+  </update>
+
+  <!-- 조회수 증가 -->
+  <update id="increaseViewCount" parameterType="int">
+    UPDATE BOARD_POST
+    SET VIEW_COUNT = VIEW_COUNT + 1
+    WHERE POST_ID = #{postId}
+  </update>
+
+  <!-- 카테고리 목록 -->
+  <select id="getCategories" resultType="BoardCategoryDTO">
+    SELECT CATEGORY_ID, CATEGORY_NAME, IS_ACTIVE, SORT_ORDER
+    FROM BOARD_CATEGORY
+    WHERE IS_ACTIVE = 'Y'
+    ORDER BY SORT_ORDER ASC, CATEGORY_ID ASC
+  </select>
+
+  <!-- 선택된 카테고리 게시글 목록 -->
+  <select id="selectPostList" resultType="kr.or.mes2.dto.BoardPostDTO">
+    SELECT *
+    FROM BOARD_POST
+    WHERE DELETE_YN = 'N'
+    <if test="_parameter != null and _parameter != 0">
+      AND CATEGORY_ID = #{_parameter}
+    </if>
+    ORDER BY POST_ID DESC
+  </select>
+
+
+  <!-- ✅ 댓글 등록 (COMMENT_LEVEL / PARENT_ID 반영) -->
+  <insert id="insertComment" parameterType="BoardCommentDTO">
+    INSERT INTO BOARD_COMMENT (
+      COMMENT_ID, POST_ID, CONTENT, WRITER_ID, COMMENT_LEVEL, PARENT_ID, CREATED_AT
+    )
+    VALUES (
+      #{commentId}, #{postId}, #{content}, #{writerId},
+      #{commentLevel}, #{parentId}, SYSDATE
+    )
+  </insert>
+
+
+  <!-- 댓글 수정 -->
+  <update id="updateComment" parameterType="kr.or.mes2.dto.BoardCommentDTO">
+    UPDATE BOARD_COMMENT
+    SET CONTENT = #{content},
+        UPDATED_AT = SYSDATE
+    WHERE COMMENT_ID = #{commentId}
+  </update>
+
+
+  <!-- 댓글 삭제 -->
+  <update id="deleteComment" parameterType="int">
+    UPDATE BOARD_COMMENT
+    SET DELETE_YN = 'Y',
+        UPDATED_AT = SYSDATE
+    WHERE COMMENT_ID = #{commentId}
+  </update>
+
+
+  <!-- ✅ 댓글 목록 (대댓글 포함, 정렬 기준 수정) -->
+  <select id="getCommentsByPostId" parameterType="int"
+          resultType="kr.or.mes2.dto.BoardCommentDTO">
+    SELECT
+      C.COMMENT_ID,
+      C.POST_ID,
+      C.CONTENT,
+      C.WRITER_ID,
+      U.LOGIN_ID AS WRITER_NAME,
+      C.COMMENT_LEVEL,
+      C.PARENT_ID,
+      C.CREATED_AT,
+      C.UPDATED_AT
+    FROM BOARD_COMMENT C
+    JOIN USER_T U ON C.WRITER_ID = U.USER_ID
+    WHERE C.DELETE_YN = 'N'
+      AND C.POST_ID = #{postId}
+    ORDER BY NVL(C.PARENT_ID, C.COMMENT_ID), C.COMMENT_LEVEL, C.COMMENT_ID
+  </select>
+
+
+  <!-- 댓글 ID 자동 증가용 -->
+  <select id="getMaxCommentId" resultType="int">
+    SELECT NVL(MAX(COMMENT_ID), 0) FROM BOARD_COMMENT
+  </select>
+
+
+  <!-- 첨부파일 목록 -->
+  <select id="getAttachments" parameterType="int"
+          resultType="BoardAttachmentDTO">
+    SELECT ATTACH_ID, POST_ID, ORIGINAL_NAME, STORED_NAME, STORAGE_PATH,
+           FILE_SIZE, CONTENT_TYPE, UPLOADED_AT, UPLOADER_ID
+    FROM BOARD_ATTACHMENT
+    WHERE POST_ID = #{postId}
+  </select>
+
+  <!-- 첨부파일 삭제 -->
+  <delete id="deleteAttachmentByPostId" parameterType="int">
+    DELETE FROM BOARD_ATTACHMENT WHERE POST_ID = #{postId}
+  </delete>
+
+  <!-- 첨부파일 등록 -->
+  <insert id="insertAttachment" parameterType="BoardAttachmentDTO">
+    INSERT INTO BOARD_ATTACHMENT (
+      ATTACH_ID, POST_ID, ORIGINAL_NAME, STORED_NAME, STORAGE_PATH,
+      FILE_SIZE, CONTENT_TYPE, UPLOADED_AT, UPLOADER_ID
+    ) VALUES (
+      (SELECT NVL(MAX(ATTACH_ID), 0) + 1 FROM BOARD_ATTACHMENT),
+      #{postId},
+      #{originalName}, #{storedName}, #{storagePath},
+      #{fileSize}, #{contentType}, SYSDATE, #{uploaderId}
+    )
+  </insert>
+
+</mapper>
