@@ -69,4 +69,8 @@ public class QualityInspectionDAO {
         sqlSession.update(NS + "updateStatusToING", txnId);
     }
 
+    /** ✅ [TXN_ID 기준으로 INVENTORY 수량(QTY) 조회] */
+    public Integer getQtyByTxnId(Integer txnId) {
+        return sqlSession.selectOne(NS + "getQtyByTxnId", txnId);
+    }
 }
