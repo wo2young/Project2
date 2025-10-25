@@ -38,12 +38,23 @@ public class QualityInspectionService {
     /**
      * ✅ [품질검사 등록]
      * - 자바단에서 시퀀스 대체 (MAX + 1)
+     * - TXN_ID 기준으로 INVENTORY_TRANSACTION의 QTY 불러와 TOTAL_QTY에 세팅
      * - CREATED_AT은 SYSDATE 자동 입력
      */
     public void insertInspection(QualityInspectionDTO dto) {
+        // ✅ 시퀀스 대체 (MAX + 1)
         int nextId = dao.getNextInspectionId();
         dto.setInspectionId(nextId);
+
+        // ✅ TXN_ID 기준으로 인벤토리 수량 조회 → TOTAL_QTY에 저장
+        Integer qty = dao.getQtyByTxnId(dto.getTxnId());
+        dto.setTotalQty(qty);
+
+        // ✅ 품질검사 등록
         dao.insertInspection(dto);
+
+        // ✅ 검사 진행 중 상태로 변경
+        dao.updateStatusToING(dto.getTxnId());
     }
 
     /**
@@ -68,6 +79,4 @@ public class QualityInspectionService {
     public void updateStatusToING(int txnId) {
         dao.updateStatusToING(txnId);
     }
-
-
 }

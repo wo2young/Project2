@@ -58,4 +58,7 @@ public class QualityDefectService {
         result.put("remainingQty", remaining);
         return result;
     }
+    
+    
+    
 }
