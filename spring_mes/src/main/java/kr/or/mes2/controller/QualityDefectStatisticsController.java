@@ -1,18 +1,12 @@
 package kr.or.mes2.controller;
 
 import java.util.*;
-import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
-import kr.or.mes2.service.QualityDefectStatisticsService;
 import kr.or.mes2.dto.QualityDefectStatisticsDTO;
+import kr.or.mes2.service.QualityDefectStatisticsService;
 
 @Controller
 @RequestMapping("/quality/defect")
@@ -21,47 +15,63 @@ public class QualityDefectStatisticsController {
     @Autowired
     private QualityDefectStatisticsService service;
 
-    /** ✅ 불량 통계 메인 페이지 (기본: 완제품 기준) */
+    /**
+     * ✅ 불량 통계 메인 페이지
+     * - JSP: /WEB-INF/views/quality/QualityDefectStatistics.jsp
+     * - URL: /quality/defect/statistics
+     */
     @GetMapping("/statistics")
-    public String showDefectStatistics(Model model) {
-        try {
-            // ✅ 전체 요약 (양품/불량/불량률)
-            QualityDefectStatisticsDTO summary = service.getSummary();
-            model.addAttribute("summary", summary);
-
-            // ✅ 기본 그래프 데이터 (완제품 PCD)
-            List<Map<String, Object>> typeRatio = service.getProductTypeDefectRate("PCD");
-            model.addAttribute("typeLabels",
-                    typeRatio.stream().map(m -> m.get("ITEM_NAME")).collect(Collectors.toList()));
-            model.addAttribute("typeData",
-                    typeRatio.stream().map(m -> m.get("DEFECT_RATE")).collect(Collectors.toList()));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("errorMsg", "통계 데이터 로딩 중 오류: " + e.getMessage());
-        }
-
-        // ✅ JSP 경로
+    public String showStatisticsPage() {
         return "quality/QualityDefectStatistics";
     }
 
-    /** ✅ AJAX 요청 (완제품 ↔ 반제품 전환 시) */
-    @GetMapping("/statistics/data")
+    /**
+     * ✅ AJAX 요청 (완제품 / 반제품 선택 시)
+     * - URL 예시:
+     *   /quality/defect/statistics/data?type=PCD
+     *   /quality/defect/statistics/data?type=SGD
+     */
     @ResponseBody
-    public Map<String, Object> getDefectStatisticsData(@RequestParam("type") String type) {
+    @GetMapping("/statistics/data")
+    public Map<String, Object> getStatisticsData(
+            @RequestParam(value = "type", required = false, defaultValue = "PCD") String type) {
+
         Map<String, Object> result = new HashMap<>();
         try {
-            List<Map<String, Object>> typeRatio = service.getProductTypeDefectRate(type);
+            // ✅ TYPE 안전 처리
+            type = (type == null || type.isBlank()) ? "PCD" : type.trim().toUpperCase();
 
-            result.put("labels",
-                    typeRatio.stream().map(m -> m.get("ITEM_NAME")).collect(Collectors.toList()));
-            result.put("values",
-                    typeRatio.stream().map(m -> m.get("DEFECT_RATE")).collect(Collectors.toList()));
+            System.out.println("📊 [불량통계] 요청된 TYPE: " + type);
+
+            // ✅ 1️⃣ 상단 요약 통계
+            QualityDefectStatisticsDTO summary = service.getStatisticsByType(type);
+            if (summary == null) {
+                summary = new QualityDefectStatisticsDTO();
+                summary.setProductTypeCode(type);
+                summary.setTotalQty(0);
+                summary.setDefectQty(0);
+                summary.setDefectRate(0);
+            }
+
+            // ✅ 2️⃣ 불량유형별 승인건 수량
+            List<Map<String, Object>> defectTypeStats = service.getDefectNameStatsByItemType(type);
+            if (defectTypeStats == null) defectTypeStats = new ArrayList<>();
+
+            // ✅ 3️⃣ 정상 응답 구조
+            result.put("status", "success");
+            result.put("summary", summary);
+            result.put("defectTypeStats", defectTypeStats);
 
         } catch (Exception e) {
             e.printStackTrace();
-            result.put("error", "데이터 로딩 중 오류: " + e.getMessage());
+            System.err.println("❌ [불량통계] 데이터 조회 오류: " + e.getMessage());
+
+            result.put("status", "error");
+            result.put("message", "데이터 조회 중 오류가 발생했습니다.");
+            result.put("summary", new QualityDefectStatisticsDTO());
+            result.put("defectTypeStats", Collections.emptyList());
         }
+
         return result;
     }
 }

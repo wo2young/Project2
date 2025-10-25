@@ -53,7 +53,7 @@ public class QualityInspectionController {
             model.addAttribute("errorMsg", "페이지 로딩 중 오류: " + e.getMessage());
         }
 
-        // ✅ JSP 경로 수정
+        // ✅ JSP 경로
         return "quality/QualityInspection";
     }
 
@@ -87,12 +87,10 @@ public class QualityInspectionController {
             // ✅ 기본값 보정
             if (dto.getDefectQty() == null) dto.setDefectQty(0);
 
-            // ✅ 등록 실행
+            // ✅ 등록 실행 (Service에서 TOTAL_QTY 자동 세팅 + 상태 'ING' 변경)
             inspectionService.insertInspection(dto);
 
-            // ✅ 등록 후 해당 트랜잭션 상태 'ING'로 변경
-            inspectionService.updateStatusToING(dto.getTxnId());
-
+            // ✅ 메시지 처리
             session.setAttribute("msg", "✅ 품질검사 등록이 완료되었습니다.");
 
         } catch (Exception e) {
