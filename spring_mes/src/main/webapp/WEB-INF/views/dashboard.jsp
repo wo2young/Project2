@@ -86,11 +86,11 @@
 }
 </style>
 </head>
-<body>
+<body class="hide-scrollbar">
 
 	<%@ include file="/WEB-INF/views/includes/header.jsp"%>
 
-	<main class="wrap">
+	<main class="wrap hide-scrollbar">
 
 		<!-- 상단 요약 카드 -->
 		<div class="cards">
@@ -114,7 +114,7 @@
 				<canvas id="chart7"></canvas>
 			</div>
 			<div class="panel">
-				<h3>품목별 목표 & 실적</h3>
+				<h3>목표 대비 실적율</h3>
 				<canvas id="chartMonth"></canvas>
 			</div>
 			<div class="panel">
@@ -125,14 +125,14 @@
 				<h3>재고 현황</h3>
 				<canvas id="chartInventory"></canvas>
 			</div>
-			<div class="panel">
-				<h3>설비별 가동률</h3>
-				<canvas id="chartOEE"></canvas>
-			</div>
-			<div class="panel">
-				<h3>승인 요청 상태</h3>
-				<canvas id="chartApproval"></canvas>
-			</div>
+<!-- 			<div class="panel"> -->
+<!-- 				<h3>설비별 가동률</h3> -->
+<%-- 				<canvas id="chartOEE"></canvas> --%>
+<!-- 			</div> -->
+<!-- 			<div class="panel"> -->
+<!-- 				<h3>승인 요청 상태</h3> -->
+<%-- 				<canvas id="chartApproval"></canvas> --%>
+<!-- 			</div> -->
 		</div>
 	</main>
 
@@ -278,35 +278,35 @@ new Chart(document.getElementById('chartInventory'), {
 });
 
 // ===== 설비별 가동률 =====
-new Chart(document.getElementById('chartOEE'), {
-	type: 'bar',
-	data: {
-		labels: [<c:forEach var="e" items="${equipOEE}" varStatus="s">'${e.label}'<c:if test="${!s.last}">,</c:if></c:forEach>],
-		datasets: [{
-			label: '가동률(%)',
-			data: [<c:forEach var="e" items="${equipOEE}" varStatus="s">${e.value}<c:if test="${!s.last}">,</c:if></c:forEach>],
-			backgroundColor: '#fbbf24'
-		}]
-	},
-	options: commonOpts
-});
+// new Chart(document.getElementById('chartOEE'), {
+// 	type: 'bar',
+// 	data: {
+// 		labels: [<c:forEach var="e" items="${equipOEE}" varStatus="s">'${e.label}'<c:if test="${!s.last}">,</c:if></c:forEach>],
+// 		datasets: [{
+// 			label: '가동률(%)',
+// 			data: [<c:forEach var="e" items="${equipOEE}" varStatus="s">${e.value}<c:if test="${!s.last}">,</c:if></c:forEach>],
+// 			backgroundColor: '#fbbf24'
+// 		}]
+// 	},
+// 	options: commonOpts
+// });
 
-// ===== 승인 요청 상태 =====
-new Chart(document.getElementById('chartApproval'), {
-	type: 'pie',
-	data: {
-		labels: [<c:forEach var="a" items="${approvalStat}" varStatus="s">'${a.label}'<c:if test="${!s.last}">,</c:if></c:forEach>],
-		datasets: [{
-			data: [<c:forEach var="a" items="${approvalStat}" varStatus="s">${a.value}<c:if test="${!s.last}">,</c:if></c:forEach>],
-			backgroundColor: ['#fbbf24','#34d399','#f87171']
-		}]
-	},
-	options: {
-		responsive: true,
-		maintainAspectRatio: false,
-		plugins: { legend: { position: 'right', labels: { color: '#e0e0e0' } } }
-	}
-});
+// // ===== 승인 요청 상태 =====
+// new Chart(document.getElementById('chartApproval'), {
+// 	type: 'pie',
+// 	data: {
+// 		labels: [<c:forEach var="a" items="${approvalStat}" varStatus="s">'${a.label}'<c:if test="${!s.last}">,</c:if></c:forEach>],
+// 		datasets: [{
+// 			data: [<c:forEach var="a" items="${approvalStat}" varStatus="s">${a.value}<c:if test="${!s.last}">,</c:if></c:forEach>],
+// 			backgroundColor: ['#fbbf24','#34d399','#f87171']
+// 		}]
+// 	},
+// 	options: {
+// 		responsive: true,
+// 		maintainAspectRatio: false,
+// 		plugins: { legend: { position: 'right', labels: { color: '#e0e0e0' } } }
+// 	}
+// });
 </script>
 </body>
 </html>
