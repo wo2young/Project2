@@ -2,6 +2,7 @@ package kr.or.mes2.controller;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpSession;
@@ -29,34 +30,45 @@ public class BoardController {
 
 	@Autowired
 	private BoardService boardService;
-
+	
 	@GetMapping("")
-	public String boardRoot(@RequestParam(value = "categoryId", required = false) Integer categoryId,
-			@RequestParam(value = "keyword", required = false) String keyword, Model model) {
-		List<BoardPostDTO> posts = boardService.getPostList(categoryId);
-		List<BoardCategoryDTO> categories = boardService.getCategories();
-
-		model.addAttribute("posts", posts);
-		model.addAttribute("categories", categories);
-		model.addAttribute("selectedCategoryId", categoryId);
-		model.addAttribute("keyword", keyword);
-
-		return "board/list";
+	public String boardRoot(
+	        @RequestParam(value = "categoryId", required = false) Integer categoryId,
+	        @RequestParam(value = "keyword", required = false) String keyword) {
+	    String redirectUrl = "/board/list";
+	    boolean hasParams = categoryId != null || (keyword != null && !keyword.isEmpty());
+	    if (hasParams) {
+	        redirectUrl += "?";
+	        if (categoryId != null) redirectUrl += "categoryId=" + categoryId + "&";
+	        if (keyword != null && !keyword.isEmpty()) redirectUrl += "keyword=" + keyword;
+	    }
+	    return "redirect:" + redirectUrl;
 	}
 
 	@GetMapping("/list")
-	public String list(@RequestParam(value = "categoryId", required = false) Integer categoryId,
-			@RequestParam(value = "keyword", required = false) String keyword, Model model) {
+	public String list(
+	    @RequestParam(value = "categoryId", required = false) Integer categoryId,
+	    @RequestParam(value = "keyword", required = false) String keyword,
+	    @RequestParam(value = "page", defaultValue = "1") int page,
+	    @RequestParam(value = "size", defaultValue = "10") int size,
+	    Model model
+	) {
+	    Map<String, Object> data = boardService.getPagedPostList(keyword, categoryId, page, size);
 
-		List<BoardPostDTO> posts = boardService.getPostList(categoryId);
-		List<BoardCategoryDTO> categories = boardService.getCategories();
+	    model.addAttribute("posts", data.get("list"));
+	    model.addAttribute("categories", boardService.getCategories());
+	    model.addAttribute("selectedCategoryId", categoryId);
+	    model.addAttribute("keyword", keyword);
 
-		model.addAttribute("posts", posts);
-		model.addAttribute("categories", categories);
-		model.addAttribute("selectedCategoryId", categoryId);
-		model.addAttribute("keyword", keyword);
+	    // ✅ 페이징 정보 JSP로 전달
+	    model.addAttribute("page", data.get("page"));
+	    model.addAttribute("size", data.get("size"));
+	    model.addAttribute("totalPage", data.get("totalPage"));
+	    model.addAttribute("startPage", data.get("startPage"));
+	    model.addAttribute("endPage", data.get("endPage"));
+	    model.addAttribute("totalCount", data.get("totalCount"));
 
-		return "board/list";
+	    return "board/list";
 	}
 
 	@GetMapping("/view")

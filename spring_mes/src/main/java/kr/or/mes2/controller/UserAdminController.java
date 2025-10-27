@@ -26,26 +26,24 @@ public class UserAdminController {
 
 	// 사용자 목록
 	@GetMapping
-	public String list(@RequestParam(required = false) String q, @RequestParam(defaultValue = "1") int p,
-			@RequestParam(defaultValue = "10") int size, Model model) {
+	public String list(
+	        @RequestParam(required = false) String q,
+	        @RequestParam(defaultValue = "1") int page,
+	        @RequestParam(defaultValue = "6") int size,
+	        Model model) {
 
-		int total = userService.count(q);
-		List<UserDTO> list = userService.list(q, p, size);
+	    Map<String, Object> data = userService.getPagedUserList(q, page, size);
 
-		int totalPages = (int) Math.ceil(total / (double) size);
-		if (p < 1)
-			p = 1;
-		if (totalPages > 0 && p > totalPages)
-			p = totalPages;
+	    model.addAttribute("q", q);
+	    model.addAttribute("list", data.get("list"));
+	    model.addAttribute("page", data.get("page"));
+	    model.addAttribute("size", data.get("size"));
+	    model.addAttribute("total", data.get("totalCount"));
+	    model.addAttribute("totalPage", data.get("totalPage"));
+	    model.addAttribute("startPage", data.get("startPage"));
+	    model.addAttribute("endPage", data.get("endPage"));
 
-		model.addAttribute("q", q);
-		model.addAttribute("list", list);
-		model.addAttribute("page", p);
-		model.addAttribute("size", size);
-		model.addAttribute("total", total);
-		model.addAttribute("totalPages", totalPages);
-
-		return "admin/admin_list"; // 경로도 변경
+	    return "admin/admin_list";
 	}
 
 	// 신규 사용자 등록 폼
@@ -94,30 +92,30 @@ public class UserAdminController {
 	@PostMapping("/reset-pw")
 	@ResponseBody
 	public Map<String, Object> resetPw(@RequestParam int id) {
-	    Map<String, Object> response = new HashMap<>();
-	    try {
-	        // (1) 리셋 코드 발급 및 이메일 발송
-	        String token = userService.issueResetToken(id); // 내부에서 메일 전송 포함
+		Map<String, Object> response = new HashMap<>();
+		try {
+			// (1) 리셋 코드 발급 및 이메일 발송
+			String token = userService.issueResetToken(id); // 내부에서 메일 전송 포함
 
-	        if (token == null) {
-	            response.put("status", "fail");
-	            response.put("message", "토큰 발급 실패 또는 이메일 전송 오류");
-	            return response;
-	        }
+			if (token == null) {
+				response.put("status", "fail");
+				response.put("message", "토큰 발급 실패 또는 이메일 전송 오류");
+				return response;
+			}
 
-	        // (2) 사용자 정보 조회 (모달용)
-	        UserDTO target = userService.find(id);
+			// (2) 사용자 정보 조회 (모달용)
+			UserDTO target = userService.find(id);
 
-	        response.put("status", "ok");
-	        response.put("name", target.getName());
-	        response.put("loginId", target.getLoginId());
+			response.put("status", "ok");
+			response.put("name", target.getName());
+			response.put("loginId", target.getLoginId());
 
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	        response.put("status", "fail");
-	        response.put("message", "예외 발생: " + e.getMessage());
-	    }
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.put("status", "fail");
+			response.put("message", "예외 발생: " + e.getMessage());
+		}
 
-	    return response;
+		return response;
 	}
 }
