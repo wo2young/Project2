@@ -26,6 +26,23 @@
   color: var(--text);
 }
 
+/* ✅ 기본 (데스크톱) */
+.admin-card table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: clamp(13px, 0.9vw, 15px);  /* 글자 크기 자동 조정 */
+  transition: all 0.3s ease;             /* 부드러운 전환 */
+}
+
+.admin-card th,
+.admin-card td {
+  padding: clamp(6px, 0.6vw, 10px);     /* 패딩도 화면에 따라 줄어듦 */
+  height: clamp(42px, 3.5vw, 48px);
+  text-align: center;
+  vertical-align: middle;
+}
+
 /* 제목 */
 h2 {
   color: var(--primary);
@@ -98,6 +115,84 @@ h2 {
 
 .btn:hover {
   opacity: 0.9;
+}
+
+/* ======== 반응형 추가 ======== */
+
+/* ✅ 태블릿 (1024px 이하) */
+@media (max-width: 1024px) {
+  .admin-card {
+    padding: 20px;
+    margin: 40px auto;
+  }
+
+  h2 {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .filter-buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filter-buttons a {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+
+  .admin-card table {
+    width: 95%;                        /* 약간 여백 확보 */
+    font-size: clamp(12px, 1vw, 14px);
+  }
+
+  .admin-card th,
+  .admin-card td {
+    width: 14%;                        /* 7열 기준 */
+  }
+}
+
+/* ✅ 모바일 (768px 이하) */
+@media (max-width: 768px) {
+  .admin-card {
+    padding: 16px;
+    margin: 20px auto;
+    border-radius: 8px;
+  }
+
+  h2 {
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .filter-buttons a {
+    font-size: 13px;
+    padding: 5px 8px;
+  }
+
+ .admin-card table {
+    width: 100%;
+    table-layout: auto;                /* 좁은 화면에서 유연하게 */
+    font-size: clamp(11px, 1.2vw, 13px);
+  }
+
+  .admin-card th,
+  .admin-card td {
+    padding: clamp(5px, 0.8vw, 8px);
+    height: clamp(36px, 4vw, 44px);
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn {
+    font-size: clamp(11px, 1.2vw, 13px);
+    padding: clamp(4px, 0.6vw, 7px) clamp(6px, 1vw, 10px);
+  }
 }
 </style>
 </head>

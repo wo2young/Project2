@@ -99,6 +99,61 @@ h2 {
   color: var(--primary);
   font-size: 18px;
 }
+
+/* ✅ 태블릿 (1024px 이하) */
+@media (max-width: 1024px) {
+  .table-container {
+    padding: 20px;
+    margin: 40px auto;
+  }
+
+  h2 {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .table-container table {
+    width: 95%;
+    font-size: clamp(12px, 1vw, 14px);
+  }
+
+  .table-container th,
+  .table-container td {
+    width: 14%;      /* 7열 기준 */
+    min-width: auto;
+  }
+}
+
+/* ✅ 모바일 (768px 이하) */
+@media (max-width: 768px) {
+  .table-container {
+    padding: 16px;
+    margin: 20px auto;
+    border-radius: 8px;
+  }
+
+  h2 {
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .table-container table {
+    width: 100%;
+    table-layout: auto;  /* 좁은 화면에서는 자동으로 유연하게 */
+    font-size: clamp(11px, 1.2vw, 13px);
+  }
+
+  .table-container th,
+  .table-container td {
+    padding: clamp(5px, 0.8vw, 8px);
+    height: clamp(36px, 4vw, 44px);
+  }
+
+  .btn {
+    font-size: clamp(11px, 1.2vw, 13px);
+    padding: clamp(4px, 0.6vw, 7px) clamp(6px, 1vw, 10px);
+  }
+}
 </style>
 </head>
 <body>
