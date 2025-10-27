@@ -40,6 +40,13 @@ public class UserDAO {
         map.put("size", size);
         return sqlSession.selectList(NS + "list", map);
     }
+    
+    /* ============================================================
+    관리자용 페이징 목록 조회 (ROWNUM 기반)
+    ============================================================ */
+	 public List<UserDTO> listPaged(Map<String, Object> params) {
+	     return sqlSession.selectList(NS + "list", params);
+	 }
 
     // 총 개수
     public int count(String q) {

@@ -1,7 +1,9 @@
 package kr.or.mes2.dao;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +26,6 @@ public class BoardDAO {
 
     // 글 등록
     public int insertPost(BoardPostDTO post) { return sqlSession.insert(NS + "insertPost", post); }
-
-    // 글 목록 조회
-    public List<BoardPostDTO> getPostList() { return sqlSession.selectList(NS + "getPostList"); }
 
     // 글 상세조회
     public BoardPostDTO getPostDetail(int postId) { return sqlSession.selectOne(NS + "getPostDetail", postId); }
@@ -97,4 +96,23 @@ public class BoardDAO {
     public int getMaxCommentId() {
         return sqlSession.selectOne("kr.or.mes2.mapper.BoardMapper.getMaxCommentId");
     }
+    
+ // ✅ 게시글 목록 (검색 + 페이징)
+    public List<BoardPostDTO> getPostListPaged(String q, Integer categoryId, int startRow, int endRow) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("q", q);
+        params.put("categoryId", categoryId);
+        params.put("startRow", startRow);
+        params.put("endRow", endRow);
+        return sqlSession.selectList(NS + "getPostListPaged", params);
+    }
+
+    // ✅ 게시글 총 개수 (페이징용)
+    public int getPostCount(String q, Integer categoryId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("q", q);
+        params.put("categoryId", categoryId);
+        return sqlSession.selectOne(NS + "getPostCount", params);
+    }
+
 }
