@@ -153,7 +153,7 @@
 		ORDER BY e.EQUIP_CODE
 	</select>
 
-	<!-- 7️⃣ 승인 요청 상태 -->
+	<!--  승인 요청 상태 -->
 	<select id="selectApprovalStatus"
 		resultType="kr.or.mes2.dto.DashboardDTO">
 		SELECT

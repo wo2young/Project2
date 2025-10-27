@@ -10,14 +10,49 @@
     SELECT NVL(MAX(POST_ID), 0) + 1 FROM BOARD_POST
   </select>
 
-  <!-- 게시글 목록 -->
-  <select id="getPostList" resultType="BoardPostDTO">
-    SELECT POST_ID, CATEGORY_ID, TITLE, WRITER_ID, VIEW_COUNT,
-           CREATED_AT, NOTICE_YN
-    FROM BOARD_POST
-    WHERE DELETE_YN = 'N'
-    ORDER BY NOTICE_YN DESC, CREATED_AT DESC
-  </select>
+  <!-- ✅ 게시글 목록 + 검색 + 페이징 -->
+	<select id="getPostListPaged" parameterType="map"
+	        resultType="kr.or.mes2.dto.BoardPostDTO">
+	
+	  SELECT * FROM (
+	    SELECT inner.*, ROWNUM rn
+	    FROM (
+	      SELECT
+	        POST_ID,
+	        CATEGORY_ID,
+	        TITLE,
+	        WRITER_ID,
+	        VIEW_COUNT,
+	        NOTICE_YN,
+	        CREATED_AT + INTERVAL '9' HOUR AS CREATED_AT
+	      FROM BOARD_POST
+	      WHERE DELETE_YN = 'N'
+	      <if test="q != null and q != ''">
+	        AND (LOWER(TITLE) LIKE LOWER('%' || #{q} || '%')
+	             OR LOWER(WRITER_ID) LIKE LOWER('%' || #{q} || '%'))
+	      </if>
+	      <if test="categoryId != null and categoryId != 0">
+	        AND CATEGORY_ID = #{categoryId}
+	      </if>
+	      ORDER BY NOTICE_YN DESC, CREATED_AT DESC
+	    ) inner
+	    WHERE ROWNUM &lt;= #{endRow}
+	  )
+	  WHERE rn &gt;= #{startRow}
+	</select>
+	
+	<select id="getPostCount" parameterType="map" resultType="int">
+	  SELECT COUNT(*)
+	  FROM BOARD_POST
+	  WHERE DELETE_YN = 'N'
+	  <if test="q != null and q != ''">
+	    AND (LOWER(TITLE) LIKE LOWER('%' || #{q} || '%')
+	         OR LOWER(WRITER_ID) LIKE LOWER('%' || #{q} || '%'))
+	  </if>
+	  <if test="categoryId != null and categoryId != 0">
+	    AND CATEGORY_ID = #{categoryId}
+	  </if>
+	</select>
 
   <!-- 게시글 상세 -->
   <select id="getPostDetail" parameterType="int" resultType="BoardPostDTO">

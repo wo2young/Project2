@@ -5,42 +5,126 @@
 
 <mapper namespace="kr.or.mes2.mapper.ApprovalMapper">
 
-  <!-- 승인 대기 목록 -->
-  <select id="selectPendingApprovals" resultType="kr.or.mes2.dto.ApprovalDTO">
-    SELECT 
-      a.REQUEST_ID AS requestId,
-      a.DEFECT_ID AS defectId,
-      a.REQUEST_USER AS requestUser,
-      a.STATUS AS status,
-      a.REMARK AS remark,
-      d.DEFECT_TYPE AS defectType,
-      d.DEFECT_QTY AS defectQty,
-      d.DEFECT_REASON AS defectReason,
-      a.CREATED_AT AS createdAt
-    FROM APPROVAL_REQUEST a
-    JOIN QUALITY_DEFECT d ON a.DEFECT_ID = d.DEFECT_ID
-    WHERE a.STATUS = 'PENDING'
-    ORDER BY a.CREATED_AT DESC
-  </select>
+	<!-- 1. 시퀀스 대용 -->
+	<select id="getNextRequestId" resultType="int">
+		SELECT NVL(MAX(REQUEST_ID), 0) + 1 FROM APPROVAL_REQUEST
+	</select>
 
-  <!-- 승인 처리 -->
-  <update id="approveRequest">
-    UPDATE APPROVAL_REQUEST
-    SET STATUS = 'APPROVED',
-        APPROVER_ID = #{approverId},
-        UPDATED_AT = SYSDATE,
-        REMARK = #{remark}
-    WHERE REQUEST_ID = #{requestId}
-  </update>
+	<!-- 2. 승인 요청 생성 -->
+	<insert id="insertApprovalRequest" parameterType="kr.or.mes2.dto.ApprovalDTO">
+		INSERT INTO APPROVAL_REQUEST (
+			REQUEST_ID, DEFECT_ID, REQUEST_USER, STATUS, CREATED_AT, REMARK
+		) VALUES (
+			#{requestId}, #{defectId}, #{requestUser},
+			#{approvalStatus}, SYSDATE, #{remark}
+		)
+	</insert>
 
-  <!-- 반려 처리 -->
-  <update id="rejectRequest">
-    UPDATE APPROVAL_REQUEST
-    SET STATUS = 'REJECTED',
-        APPROVER_ID = #{approverId},
-        UPDATED_AT = SYSDATE,
-        REMARK = #{remark}
-    WHERE REQUEST_ID = #{requestId}
-  </update>
+	<!-- 3. 불량 목록 조회 (상태별) -->
+	<select id="getDefectsByStatusPaged" parameterType="map" resultType="kr.or.mes2.dto.ApprovalDTO">
+		SELECT * FROM (
+			SELECT inner.*, ROWNUM rn FROM (
+				SELECT
+					d.DEFECT_ID AS defectId,
+					d.DEFECT_TYPE AS defectType,
+					d.DEFECT_QTY AS defectQty,
+					d.DEFECT_REASON AS defectReason,
+					d.STATUS AS approvalStatus,
+					u.NAME AS requesterName,
+					d.CREATED_AT AS createdAt,
+					NVL(ar.REMARK, '-') AS remark
+				FROM QUALITY_DEFECT d
+				LEFT JOIN QUALITY_INSPECTION qi ON d.INSPECT_ID = qi.INSPECTION_ID
+				LEFT JOIN USER_T u ON qi.INSPECTOR_ID = u.USER_ID
+				LEFT JOIN (
+					SELECT DEFECT_ID, MAX(REQUEST_ID) AS LAST_REQUEST_ID
+					FROM APPROVAL_REQUEST GROUP BY DEFECT_ID
+				) latest ON d.DEFECT_ID = latest.DEFECT_ID
+				LEFT JOIN APPROVAL_REQUEST ar ON latest.LAST_REQUEST_ID = ar.REQUEST_ID
+				<where>
+					<if test="status != 'ALL'">
+						AND d.STATUS = #{status}
+					</if>
+				</where>
+				ORDER BY d.CREATED_AT DESC
+			) inner
+			WHERE ROWNUM &lt;= #{endRow}
+		)
+		WHERE rn &gt;= #{startRow}
+	</select>
+
+	<!-- 4. 전체 COUNT -->
+	<select id="getTotalDefectCount" parameterType="string" resultType="int">
+		SELECT COUNT(*) FROM QUALITY_DEFECT
+		<where>
+			<if test="_parameter != 'ALL'">
+				AND STATUS = #{_parameter}
+			</if>
+		</where>
+	</select>
+
+	<!-- 5. 불량 승인/반려 -->
+	<update id="updateQualityDefectStatus" parameterType="kr.or.mes2.dto.ApprovalDTO">
+		UPDATE QUALITY_DEFECT
+		SET STATUS = #{defectStatus},
+		    APPROVED_BY = #{approverId},
+		    APPROVED_AT = SYSDATE
+		WHERE DEFECT_ID = #{defectId}
+	</update>
+
+	<!-- 6. 승인 시: 폐기 출고 등록 -->
+	<insert id="insertDefectOutTxn" parameterType="kr.or.mes2.dto.ApprovalDTO">
+		INSERT INTO INVENTORY_TRANSACTION (
+			TXN_ID, ITEM_ID, TXN_TYPE, SOURCE_TYPE, QTY, STATUS, TXN_DATE, LOT_NO, REMARK
+		)
+		SELECT
+			(SELECT NVL(MAX(TXN_ID), 0) + 1 FROM INVENTORY_TRANSACTION),
+			it.ITEM_ID,
+			'OUT',
+			'DEFECT',
+			d.DEFECT_QTY,
+			'CONFIRMED',
+			SYSDATE + INTERVAL '9' HOUR,
+			it.LOT_NO,
+			'폐기출고 | LOT:' || it.LOT_NO ||
+			' | 검사ID:' || qi.INSPECTION_ID ||
+			' | 승인ID:' || #{requestId}
+		FROM QUALITY_DEFECT d
+		JOIN QUALITY_INSPECTION qi ON d.INSPECT_ID = qi.INSPECTION_ID
+		JOIN INVENTORY_TRANSACTION it ON qi.TXN_ID = it.TXN_ID
+		WHERE d.DEFECT_ID = #{defectId}
+	</insert>
+
+	<!-- 7. 검사단위별 불량 합계 -->
+	<select id="sumDefectQtyByInspectionId" parameterType="int" resultType="int">
+		SELECT NVL(SUM(DEFECT_QTY), 0)
+		FROM QUALITY_DEFECT
+		WHERE INSPECT_ID = #{inspectionId}
+	</select>
+
+	<!-- 8. INSPECTION_ID 조회 -->
+	<select id="selectInspectionIdByDefectId" parameterType="int" resultType="int">
+		SELECT INSPECT_ID FROM QUALITY_DEFECT WHERE DEFECT_ID = #{defectId}
+	</select>
+
+	<!-- 9. 검사ID별 처리 완료 여부 확인 -->
+	<select id="isInspectionFullyHandled" parameterType="int" resultType="int">
+		SELECT CASE
+		         WHEN COUNT(*) = SUM(CASE WHEN STATUS IN ('APPROVED', 'REJECTED') THEN 1 ELSE 0 END)
+		         THEN 1 ELSE 0
+		       END AS handled
+		FROM QUALITY_DEFECT
+		WHERE INSPECT_ID = #{inspectionId}
+	</select>
+
+	<!-- 10. 검사ID 기반 재고 상태 VOIDED로 변경 -->
+	<update id="updateInventoryStatusToVoided" parameterType="int">
+		UPDATE INVENTORY_TRANSACTION
+		SET STATUS = 'VOIDED'
+		WHERE TXN_ID = (
+			SELECT TXN_ID FROM QUALITY_INSPECTION WHERE INSPECTION_ID = #{inspectionId}
+		)
+		AND STATUS = 'ING'
+	</update>
 
 </mapper>
