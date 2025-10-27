@@ -172,6 +172,18 @@ input:-webkit-autofill {
   cursor: not-allowed;
 }
 
+/* ✅ 스크롤은 유지하면서 스크롤바만 완전히 숨기기 (모든 브라우저용) */
+html, body {
+  overflow-y: scroll;        /* 스크롤 기능 유지 */
+  scrollbar-width: none;     /* Firefox용 */
+  -ms-overflow-style: none;  /* IE 및 구버전 Edge용 */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Edge용 */
+}
+
 /* ======== 반응형 시작 ======== */
 
 /* (1) 태블릿 이하: 폼, 테이블 간격 줄이기 */
