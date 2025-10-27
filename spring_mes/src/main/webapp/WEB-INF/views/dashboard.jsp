@@ -7,82 +7,82 @@
 <meta charset="UTF-8">
 <title>대시보드</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/common.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-html, body {
-	margin: 0;
-	padding: 0;
-}
-
-body {
-	background-color: #0a0f1a;
-	color: #fff;
-	font-family: Arial, sans-serif;
-}
-
 .wrap {
-	max-width: 1200px;
-	margin: 24px auto;
-	padding: 0 12px;
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 0 12px;
 }
 
 .cards {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 12px;
-	margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .card {
-	border: 1px solid #1f2937;
-	border-radius: 10px;
-	padding: 16px;
-	background-color: #111827;
-	color: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  background-color: var(--card);
+  color: var(--text);
 }
 
 .big {
-	font-size: 28px;
-	font-weight: 700;
+  font-size: 28px;
+  font-weight: 700;
 }
 
 .grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
 .panel {
-	border: 1px solid #1f2937;
-	border-radius: 10px;
-	padding: 12px;
-	background: #111827;
-	height: 320px;
-	min-height: 320px;
-	position: relative;
-	overflow: hidden;
-	color: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--card);
+  height: 320px;
+  min-height: 320px;
+  position: relative;
+  overflow: hidden;
+  color: var(--text);
 }
 
 .panel h3 {
-	margin: 0 0 8px 0;
-	font-size: 16px;
+  margin: 0 0 8px 0;
+  font-size: 16px;
 }
 
 .panel canvas {
-	display: block !important;
-	width: 100% !important;
-	height: calc(100% - 28px) !important;
+  display: block !important;
+  width: 100% !important;
+  height: calc(100% - 28px) !important;
 }
 
-@media ( max-width : 900px) {
-	.grid {
-		grid-template-columns: 1fr;
-	}
-	.cards {
-		grid-template-columns: 1fr;
-	}
+/* 반응형 추가 */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+  .big {
+    font-size: 22px;
+  }
 }
 </style>
 </head>
@@ -91,7 +91,6 @@ body {
 	<%@ include file="/WEB-INF/views/includes/header.jsp"%>
 
 	<main class="wrap">
-		<h2>대시보드</h2>
 
 		<!-- 상단 요약 카드 -->
 		<div class="cards">
@@ -185,7 +184,6 @@ new Chart(document.getElementById('chartDefectPie'), {
 	}
 });
 
-// ===== 최근 7일 생산량 =====
 // ===== 최근 7일 생산량 =====
 const weekLabels = [
 	<c:forEach var="w" items="${weeklyProd}" varStatus="s">
