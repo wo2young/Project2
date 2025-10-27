@@ -53,11 +53,6 @@ public class UserDAO {
         return sqlSession.selectOne(NS + "count", q);
     }
 
-    // 단일 find (기존용)
-    public UserDTO find(int id) {
-        return sqlSession.selectOne(NS + "find", id);
-    }
-
     // 로그인 아이디 중복 여부
     public boolean existsByLoginId(String loginId) {
         Boolean result = sqlSession.selectOne(NS + "existsByLoginId", loginId);
@@ -83,6 +78,10 @@ public class UserDAO {
         param.put("userId", userId);
         param.put("password", newHashedPw);
         sqlSession.update(NS + "updatePassword", param);
+    }
+    
+    public boolean updateByAdmin(UserDTO dto) {
+        return sqlSession.update(NS + "updateByAdmin", dto) > 0;
     }
 
     /* ============================================================
