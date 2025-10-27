@@ -59,10 +59,11 @@
 /* 본문 */
 .content {
   border-top: 1px solid var(--line);
+  margin-left: -140px; /* 4~8px 사이로 조정 */
   margin-top: 10px;
-  padding-top: 10px;
   line-height: 1.7;
   white-space: pre-wrap;
+  text-align: left;      /* ✅ 텍스트 좌측 정렬 */
 }
 
 /* 파일 목록 */
@@ -203,7 +204,6 @@ function toggleEditForm(id){
 
 <body>
 	<main class="wrap">
-
 		<!-- 게시글 -->
 		<div class="card">
 			<div class="card-body">

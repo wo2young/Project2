@@ -14,71 +14,75 @@
 main.wrap {
   max-width: 760px;
   margin: 0 auto;
-  padding: calc(64px + 16px) 16px 24px; /* 헤더 높이 감안 */
+  padding: calc(64px + 16px) 16px 24px; /* 헤더 높이 고려 */
 }
 
-h2 {
-  font-size: 22px;
-  margin: 0 0 20px;
-  font-weight: 800;
-  text-align: center;
-}
-
-/* 글쓰기 폼 컨테이너 */
-.editor {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 24px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-/* 라벨 */
-label {
+/* ===== 게시글 작성 form 레이아웃 교정 ===== */
+.editor label,
+.editor input[type=text],
+.editor textarea,
+.editor select,
+.editor input[type=file] {
   display: block;
-  margin: 12px 0 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* label과 input 간격 */
+.editor label {
+  margin-top: 16px;
+  margin-bottom: 6px;
   font-weight: 600;
   color: var(--muted);
 }
 
-/* 입력 영역 */
-input[type=text],
-textarea,
-select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--line);
+/* input/textarea 영역 */
+.editor input[type=text],
+.editor textarea,
+.editor select,
+.editor input[type=file] {
+  background: var(--input-bg, #111827);
+  border: 1px solid var(--line, #2c354a);
   border-radius: 8px;
-  background: var(--input-bg);
-  color: var(--text);
+  padding: 10px;
+  color: var(--text, #e6ebff);
   font-size: 14px;
 }
 
-textarea {
+/* textarea 높이 조정 */
+.editor textarea {
   resize: vertical;
+  min-height: 160px;
 }
 
-input[type=text]:focus,
-textarea:focus,
-select:focus {
+/* input focus */
+.editor input:focus,
+.editor textarea:focus,
+.editor select:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, .2);
+  border-color: var(--primary, #f59e0b);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
 }
 
-/* 버튼 영역 */
 .form-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
   justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
 }
 
-/* 취소 버튼 전용 */
+.form-actions .btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  width: auto; /* ✅ PC에서는 자동 너비로 복원 */
+  flex: 0 0 auto;
+}
+
+/* 취소 버튼 */
 .btn-cancel {
   background: #1e3a8a;
-  border-color: #1e3a8a;
+  border: 1px solid #1e3a8a;
   color: #e6ebff;
 }
 .btn-cancel:hover {
@@ -87,12 +91,9 @@ select:focus {
   color: #fff;
 }
 
-/* ===== 반응형 ===== */
-@media (max-width: 768px) {
-  main.wrap {
-    padding: 80px 12px 24px;
-  }
 
+/* ===== 반응형 (모바일용) ===== */
+@media (max-width: 768px) {
   .editor {
     padding: 16px;
   }
@@ -103,7 +104,7 @@ select:focus {
   }
 
   .form-actions .btn {
-    width: 100%;
+    width: 100%; /* ✅ 모바일에서만 꽉 차게 */
   }
 }
 </style>
@@ -148,8 +149,8 @@ select:focus {
 				placeholder="Google Drive 또는 MyBox 링크 입력">
 
 			<div class="form-actions">
-				<button class="btn btn-primary" type="submit">등록</button>
-				<a class="btn btn-cancel" href="${cxt}/board/list">취소</a>
+			  <button type="submit" class="btn btn-primary">등록</button>
+			  <button type="button" class="btn btn-cancel" onclick="location.href='${cxt}/board/list'">취소</button>
 			</div>
 		</form>
 	</main>
