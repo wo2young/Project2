@@ -1,6 +1,8 @@
 package kr.or.mes2.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +12,6 @@ import org.springframework.stereotype.Service;
 import kr.or.mes2.dao.UserDAO;
 import kr.or.mes2.dto.UserDTO;
 import kr.or.mes2.util.CryptoUtil;   // ✅ AES 암복호화 유틸
-import kr.or.mes2.service.GmailService; // ✅ Gmail API 메일 전송 유틸
 
 @Service
 public class UserService {
@@ -54,7 +55,53 @@ public class UserService {
         decryptFields(dto);
         return dto;
     }
-
+    
+    /* ============================================================
+    관리자용 사용자 목록 + 페이징 지원 (ROWNUM 기반)
+    ============================================================ */
+	 public Map<String, Object> getPagedUserList(String q, int page, int size) {
+	     // ✅ 페이지 계산
+	     int startRow = (page - 1) * size + 1;
+	     int endRow = page * size;
+	
+	     // ✅ 파라미터 전달용 Map 구성
+	     Map<String, Object> params = new HashMap<>();
+	     params.put("q", q);
+	     params.put("startRow", startRow);
+	     params.put("endRow", endRow);
+	
+	     // ✅ 목록 조회
+	     List<UserDTO> list = dao.listPaged(params);   // list() 대신 listPaged() (새 메서드)
+	     for (UserDTO u : list) {
+	         u.setEmail(cryptoUtil.decrypt(u.getEmail()));
+	         u.setPhone(cryptoUtil.decrypt(u.getPhone()));
+	     }
+	
+	     // ✅ 전체 개수 및 페이지 계산
+	     int totalCount = dao.count(q);
+	     int totalPage = (int) Math.ceil((double) totalCount / size);
+	
+	     // ✅ 블록 계산 (5페이지 단위)
+	     int blockSize = 5;
+	     int startPage = ((page - 1) / blockSize) * blockSize + 1;
+	     int endPage = Math.min(startPage + blockSize - 1, totalPage);
+	
+	     // ✅ 페이지 경계 보정
+	     if (page < 1) page = 1;
+	     if (page > totalPage && totalPage > 0) page = totalPage;
+	
+	     // ✅ 결과 담기
+	     Map<String, Object> result = new HashMap<>();
+	     result.put("list", list);
+	     result.put("totalCount", totalCount);
+	     result.put("totalPage", totalPage);
+	     result.put("page", page);
+	     result.put("size", size);
+	     result.put("startPage", startPage);
+	     result.put("endPage", endPage);
+	
+	     return result;
+	 }
     /* ============================================================
        등록 및 기본정보 수정
        ============================================================ */
