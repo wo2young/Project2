@@ -1,7 +1,6 @@
 package kr.or.mes2.controller;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,27 +64,24 @@ public class UserAdminController {
 		userService.insert(dto);
 		return "redirect:/admin/users?created=1";
 	}
-
+	
 	// 수정 폼
 	@GetMapping("/edit")
 	public String editForm(@RequestParam int id, Model model) {
-		UserDTO user = userService.find(id);
-		if (user == null)
-			return "error/404";
-		model.addAttribute("u", user);
-		return "admin/admin_edit";
+	    model.addAttribute("targetUser", userService.find(id));  // ✅ 이름 바꿔서 넘김
+	    return "admin/admin_edit";
 	}
 
 	// 수정 처리
 	@PostMapping("/edit")
 	public String edit(@ModelAttribute UserDTO dto, Model model) {
-		boolean ok = userService.updateMyInfo(dto);
-		if (!ok) {
-			model.addAttribute("error", "입력값을 확인하세요.");
-			model.addAttribute("u", dto);
-			return "admin/user_edit";
-		}
-		return "redirect:/admin/users?updated=1";
+	    boolean ok = userService.updateByAdmin(dto); // ✅ 별도 관리자용 메서드로 변경
+	    if (!ok) {
+	        model.addAttribute("error", "입력값을 확인하세요.");
+	        model.addAttribute("user", dto);
+	        return "admin/admin_edit";
+	    }
+	    return "redirect:/admin/users?updated=1";
 	}
 
 	// 비밀번호 리셋 (이메일 발송 방식)
