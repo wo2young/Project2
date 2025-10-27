@@ -249,15 +249,11 @@ h2 {
 
 	<script>
 		function loadUserAdd() {
-		  fetch("${pageContext.request.contextPath}/admin/userAdd")
-		    .then(res => res.text())
-		    .then(html => document.getElementById("tabContent").innerHTML = html);
+		  window.location.href = "${pageContext.request.contextPath}/admin/users/new";
 		}
-		
+
 		function loadUserEdit(id) {
-		  fetch("${pageContext.request.contextPath}/admin/userEdit?id=" + id)
-		    .then(res => res.text())
-		    .then(html => document.getElementById("tabContent").innerHTML = html);
+		  window.location.href = "${pageContext.request.contextPath}/admin/users/edit?id=" + id;
 		}
 		
 		//✅ 비밀번호 리셋
