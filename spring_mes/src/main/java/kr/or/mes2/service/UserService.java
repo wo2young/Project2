@@ -45,7 +45,7 @@ public class UserService {
     }
 
     public UserDTO find(int id) {
-        UserDTO dto = dao.find(id);
+        UserDTO dto = dao.findById(id);
         decryptFields(dto);
         return dto;
     }
@@ -116,6 +116,11 @@ public class UserService {
         encryptFields(dto);
         return dao.updateMyInfo(dto);
     }
+    
+    public boolean updateByAdmin(UserDTO dto) {
+        encryptFields(dto);
+        return dao.updateByAdmin(dto);  // ✅ 새 DAO 메서드 호출
+    }
 
     /* ============================================================
        유효성 검사
@@ -138,23 +143,24 @@ public class UserService {
         boolean ok = dao.updateResetToken(userId, token);
 
         if (ok) {
-            UserDTO user = dao.find(userId);
+            // ✅ 관리자: 정확히 USER_ID로 조회해야 함
+            UserDTO user = dao.findById(userId);
             decryptFields(user);  // 이메일 복호화
 
             if (user.getEmail() != null && !user.getEmail().isEmpty()) {
-            	String subject = "[MES 시스템] 비밀번호 재설정 안내";
+                String subject = "[MES 시스템] 비밀번호 재설정 안내";
 
-            	String resetLink = "http://localhost:8080/mes2/password/reset?loginId=" 
-            	        + user.getLoginId() + "&token=" + token;
+                String resetLink = "http://localhost:8080/mes2/password/reset?loginId=" 
+                        + user.getLoginId() + "&token=" + token;
 
-            	String body = ""
-            	    + "안녕하세요, " + user.getName() + "님.\n\n"
-            	    + "아래 리셋코드를 입력하거나, 링크를 클릭하여 비밀번호를 재설정하세요.\n\n"
-            	    + "리셋코드: " + token + "\n\n"
-            	    + "재설정 링크: " + resetLink + "\n\n"
-            	    + "※ 본 코드는 1시간 동안만 유효합니다.\n"
-            	    + "※ 이 요청을 직접 하지 않으셨다면 본 메일을 무시해주세요.\n\n"
-            	    + "감사합니다.\nMES 시스템 드림.";
+                String body = ""
+                    + "안녕하세요, " + user.getName() + "님.\n\n"
+                    + "아래 리셋코드를 입력하거나, 링크를 클릭하여 비밀번호를 재설정하세요.\n\n"
+                    + "리셋코드: " + token + "\n\n"
+                    + "재설정 링크: " + resetLink + "\n\n"
+                    + "※ 본 코드는 1시간 동안만 유효합니다.\n"
+                    + "※ 이 요청을 직접 하지 않으셨다면 본 메일을 무시해주세요.\n\n"
+                    + "감사합니다.\nMES 시스템 드림.";
 
                 try {
                     gmailService.sendEmail(user.getEmail(), subject, body);
